@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Equipos - VSM Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        /* Filters and Search */
+        .filters {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 5px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        /* Equipment Grid */
+        .equipment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .equipment-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .equipment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .equipment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .equipment-info h3 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .equipment-id {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            font-family: monospace;
+            background: #ecf0f1;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .equipment-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-active {
+            background: rgba(46, 204, 113, 0.1);
+            color: #27ae60;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+
+        .status-inactive {
+            background: rgba(149, 165, 166, 0.1);
+            color: #7f8c8d;
+            border: 1px solid rgba(149, 165, 166, 0.3);
+        }
+
+        .status-maintenance {
+            background: rgba(243, 156, 18, 0.1);
+            color: #d68910;
+            border: 1px solid rgba(243, 156, 18, 0.3);
+        }
+
+        .equipment-details {
+            margin-bottom: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .detail-label {
+            color: #7f8c8d;
+            font-weight: 600;
+        }
+
+        .detail-value {
+            color: #2c3e50;
+            font-family: monospace;
+        }
+
+        .csv-url {
+            font-size: 0.8rem;
+            color: #3498db;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .csv-url:hover {
+            text-decoration: underline;
+        }
+
+        .equipment-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .connection-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        .connected {
+            background: #2ecc71;
+        }
+
+        .disconnected {
+            background: #e74c3c;
+        }
+
+        .unknown {
+            background: #f39c12;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .empty-state p {
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .modal-header h2 {
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #7f8c8d;
+            padding: 5px;
+        }
+
+        .close-modal:hover {
+            color: #2c3e50;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-group-full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group textarea {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            padding-top: 20px;
+            border-top: 2px solid #ecf0f1;
+        }
+
+        /* Loading State */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .equipment-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                🔧 Gestión de Equipos
+            </h1>
+            <div class="header-actions">
+                <a href="index.html" class="btn btn-secondary">
+                    ← Volver al Panel
+                </a>
+                <button class="btn btn-success" onclick="openCreateModal()">
+                    ➕ Nuevo Equipo
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filters-grid">
+                <div class="form-group">
+                    <label>Buscar equipos</label>
+                    <input type="text" id="searchInput" placeholder="Nombre, ID o descripción..." oninput="filterEquipment()">
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="statusFilter" onchange="filterEquipment()">
+                        <option value="">Todos</option>
+                        <option value="active">Activos</option>
+                        <option value="inactive">Inactivos</option>
+                        <option value="maintenance">Mantenimiento</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ordenar por</label>
+                    <select id="sortBy" onchange="sortEquipment()">
+                        <option value="name">Nombre</option>
+                        <option value="id">ID</option>
+                        <option value="status">Estado</option>
+                        <option value="lastUpdate">Última actualización</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="refreshEquipment()">
+                        🔄 Actualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Equipment Grid -->
+        <div id="equipmentContainer">
+            <div class="equipment-grid" id="equipmentGrid">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <h3>📦 No hay equipos disponibles</h3>
+            <p>Comienza agregando tu primer equipo para monitorear en el sistema VSM</p>
+            <button class="btn btn-success" onclick="openCreateModal()">
+                ➕ Crear Primer Equipo
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Create/Edit Equipment -->
+    <div id="equipmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nuevo Equipo</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <form id="equipmentForm" onsubmit="saveEquipment(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre del Equipo *</label>
+                        <input type="text" id="equipmentName" required placeholder="Ej: Estación de Soldadura">
+                    </div>
+                    <div class="form-group">
+                        <label>ID del Equipo</label>
+                        <input type="text" id="equipmentId" placeholder="Se genera automáticamente">
+                    </div>
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select id="equipmentStatus" required>
+                            <option value="active">Activo</option>
+                            <option value="inactive">Inactivo</option>
+                            <option value="maintenance">Mantenimiento</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tiempo de Ciclo (seg)</label>
+                        <input type="number" id="cycleTime" min="0.1" step="0.1" placeholder="60.0">
+                    </div>
+                    <div class="form-group form-group-full">
+                        <label>URL del CSV *</label>
+                        <input type="url" id="csvUrl" required placeholder="https://ejemplo.com/datos-equipo.csv">
+                    </div>
+                    <div class="form-group form-group-full">
+                        <label>Descripción</label>
+                        <textarea id="equipmentDescription" placeholder="Descripción detallada del equipo..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success" id="saveButton">
+                        💾 Guardar Equipo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Estado global
+        let equipmentList = [];
+        let filteredEquipment = [];
+        let editingEquipment = null;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEquipment();
+        });
+
+        // =============================================================================
+        // DATA MANAGEMENT
+        // =============================================================================
+
+        async function loadEquipment() {
+            try {
+                showLoading(true);
+                
+                // TODO: Cargar desde API real
+                // const response = await fetch('/api/admin/equipment');
+                // const data = await response.json();
+                
+                // Mock data por ahora
+                const mockEquipment = [
+                    {
+                        id: 'eq001',
+                        name: 'Estación de Soldadura',
+                        status: 'active',
+                        csvUrl: 'http://localhost:3001/mock-csv/soldadura.csv',
+                        cycleTime: 45.5,
+                        description: 'Estación de soldadura automática con control de temperatura',
+                        lastUpdate: new Date(Date.now() - 5 * 60000), // 5 min ago
+                        connectionStatus: 'connected'
+                    },
+                    {
+                        id: 'eq002',
+                        name: 'Robot de Ensamble',
+                        status: 'active',
+                        csvUrl: 'http://localhost:3001/mock-csv/robot.csv',
+                        cycleTime: 30.2,
+                        description: 'Robot industrial de 6 ejes para ensamble de componentes',
+                        lastUpdate: new Date(Date.now() - 2 * 60000), // 2 min ago
+                        connectionStatus: 'connected'
+                    },
+                    {
+                        id: 'eq003',
+                        name: 'Prensa Hidráulica',
+                        status: 'maintenance',
+                        csvUrl: 'http://localhost:3001/mock-csv/prensa.csv',
+                        cycleTime: 120.0,
+                        description: 'Prensa hidráulica de alta presión para conformado',
+                        lastUpdate: new Date(Date.now() - 30 * 60000), // 30 min ago
+                        connectionStatus: 'unknown'
+                    },
+                    {
+                        id: 'eq004',
+                        name: 'Cinta Transportadora',
+                        status: 'active',
+                        csvUrl: 'http://localhost:3001/mock-csv/cinta.csv',
+                        cycleTime: 15.0,
+                        description: 'Sistema de transporte entre estaciones',
+                        lastUpdate: new Date(Date.now() - 1 * 60000), // 1 min ago
+                        connectionStatus: 'connected'
+                    },
+                    {
+                        id: 'eq005',
+                        name: 'Máquina CNC',
+                        status: 'inactive',
+                        csvUrl: '',
+                        cycleTime: 180.0,
+                        description: 'Máquina CNC para mecanizado de precisión',
+                        lastUpdate: new Date(Date.now() - 2 * 60 * 60000), // 2 hours ago
+                        connectionStatus: 'disconnected'
+                    }
+                ];
+
+                equipmentList = mockEquipment;
+                filteredEquipment = [...equipmentList];
+                renderEquipment();
+                
+            } catch (error) {
+                console.error('Error cargando equipos:', error);
+                showError('Error cargando la lista de equipos');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderEquipment() {
+            const container = document.getElementById('equipmentGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (filteredEquipment.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            container.innerHTML = filteredEquipment.map(equipment => `
+                <div class="equipment-card">
+                    <div class="equipment-header">
+                        <div class="equipment-info">
+                            <h3>
+                                <div class="connection-indicator ${equipment.connectionStatus}"></div>
+                                ${equipment.name}
+                            </h3>
+                            <span class="equipment-id">${equipment.id}</span>
+                        </div>
+                        <span class="equipment-status status-${equipment.status}">
+                            ${getStatusText(equipment.status)}
+                        </span>
+                    </div>
+                    
+                    <div class="equipment-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Tiempo de Ciclo:</span>
+                            <span class="detail-value">${equipment.cycleTime ? equipment.cycleTime + 's' : 'No definido'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Última actualización:</span>
+                            <span class="detail-value">${formatTime(equipment.lastUpdate)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">URL CSV:</span>
+                            <span class="detail-value">
+                                ${equipment.csvUrl ? 
+                                    `<a href="${equipment.csvUrl}" target="_blank" class="csv-url">${equipment.csvUrl}</a>` : 
+                                    '<span style="color: #e74c3c;">No configurada</span>'
+                                }
+                            </span>
+                        </div>
+                        ${equipment.description ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Descripción:</span>
+                            <span class="detail-value">${equipment.description}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="equipment-actions">
+                        <button class="btn btn-primary btn-small" onclick="testConnection('${equipment.id}')">
+                            🔍 Probar
+                        </button>
+                        <button class="btn btn-secondary btn-small" onclick="editEquipment('${equipment.id}')">
+                            ✏️ Editar
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="deleteEquipment('${equipment.id}')">
+                            🗑️ Eliminar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // =============================================================================
+        // UTILITY FUNCTIONS
+        // =============================================================================
+
+        function getStatusText(status) {
+            const statusMap = {
+                'active': 'Activo',
+                'inactive': 'Inactivo',
+                'maintenance': 'Mantenimiento'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatTime(date) {
+            if (!date) return 'Nunca';
+            const now = new Date();
+            const diff = now - new Date(date);
+            
+            if (diff < 60000) return 'Hace menos de 1 min';
+            if (diff < 3600000) return `Hace ${Math.floor(diff / 60000)} min`;
+            if (diff < 86400000) return `Hace ${Math.floor(diff / 3600000)} h`;
+            return `Hace ${Math.floor(diff / 86400000)} días`;
+        }
+
+        function showLoading(show) {
+            const container = document.getElementById('equipmentContainer');
+            if (show) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px;">
+                        <div class="loading"></div>
+                        <p style="margin-top: 15px; color: #7f8c8d;">Cargando equipos...</p>
+                    </div>
+                `;
+            }
+        }
+
+        function showError(message) {
+            alert('⚠️ ' + message);
+        }
+
+        function showSuccess(message) {
+            alert('✅ ' + message);
+        }
+
+        // =============================================================================
+        // FILTERING AND SORTING
+        // =============================================================================
+
+        function filterEquipment() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredEquipment = equipmentList.filter(equipment => {
+                const matchesSearch = !searchTerm || 
+                    equipment.name.toLowerCase().includes(searchTerm) ||
+                    equipment.id.toLowerCase().includes(searchTerm) ||
+                    (equipment.description && equipment.description.toLowerCase().includes(searchTerm));
+                
+                const matchesStatus = !statusFilter || equipment.status === statusFilter;
+                
+                return matchesSearch && matchesStatus;
+            });
+
+            sortEquipment(false); // Re-sort and render
+        }
+
+        function sortEquipment(render = true) {
+            const sortBy = document.getElementById('sortBy').value;
+            
+            filteredEquipment.sort((a, b) => {
+                switch (sortBy) {
+                    case 'name':
+                        return a.name.localeCompare(b.name);
+                    case 'id':
+                        return a.id.localeCompare(b.id);
+                    case 'status':
+                        return a.status.localeCompare(b.status);
+                    case 'lastUpdate':
+                        return new Date(b.lastUpdate) - new Date(a.lastUpdate);
+                    default:
+                        return 0;
+                }
+            });
+
+            if (render) {
+                renderEquipment();
+            }
+        }
+
+        function refreshEquipment() {
+            loadEquipment();
+        }
+
+        // =============================================================================
+        // MODAL MANAGEMENT
+        // =============================================================================
+
+        function openCreateModal() {
+            editingEquipment = null;
+            document.getElementById('modalTitle').textContent = 'Nuevo Equipo';
+            document.getElementById('saveButton').textContent = '💾 Crear Equipo';
+            clearForm();
+            document.getElementById('equipmentModal').classList.add('show');
+        }
+
+        function editEquipment(equipmentId) {
+            editingEquipment = equipmentList.find(eq => eq.id === equipmentId);
+            if (!editingEquipment) return;
+
+            document.getElementById('modalTitle').textContent = 'Editar Equipo';
+            document.getElementById('saveButton').textContent = '💾 Actualizar Equipo';
+            
+            // Llenar formulario con datos existentes
+            document.getElementById('equipmentName').value = editingEquipment.name;
+            document.getElementById('equipmentId').value = editingEquipment.id;
+            document.getElementById('equipmentStatus').value = editingEquipment.status;
+            document.getElementById('cycleTime').value = editingEquipment.cycleTime || '';
+            document.getElementById('csvUrl').value = editingEquipment.csvUrl || '';
+            document.getElementById('equipmentDescription').value = editingEquipment.description || '';
+            
+            document.getElementById('equipmentModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('equipmentModal').classList.remove('show');
+            clearForm();
+            editingEquipment = null;
+        }
+
+        function clearForm() {
+            document.getElementById('equipmentForm').reset();
+            document.getElementById('equipmentId').value = '';
+        }
+
+        // =============================================================================
+        // EQUIPMENT OPERATIONS
+        // =============================================================================
+
+        async function saveEquipment(event) {
+            event.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('equipmentName').value.trim(),
+                id: document.getElementById('equipmentId').value.trim(),
+                status: document.getElementById('equipmentStatus').value,
+                cycleTime: parseFloat(document.getElementById('cycleTime').value) || null,
+                csvUrl: document.getElementById('csvUrl').value.trim(),
+                description: document.getElementById('equipmentDescription').value.trim()
+            };
+
+            // Validaciones
+            if (!formData.name) {
+                showError('El nombre del equipo es requerido');
+                return;
+            }
+
+            if (!formData.csvUrl) {
+                showError('La URL del CSV es requerida');
+                return;
+            }
+
+            try {
+                const saveButton = document.getElementById('saveButton');
+                const originalText = saveButton.textContent;
+                saveButton.textContent = 'Guardando...';
+                saveButton.disabled = true;
+
+                if (editingEquipment) {
+                    // Actualizar equipo existente
+                    const index = equipmentList.findIndex(eq => eq.id === editingEquipment.id);
+                    if (index !== -1) {
+                        equipmentList[index] = {
+                            ...equipmentList[index],
+                            ...formData,
+                            lastUpdate: new Date(),
+                            connectionStatus: 'unknown' // Se actualizará al probar conexión
+                        };
+                    }
+                    showSuccess('Equipo actualizado exitosamente');
+                } else {
+                    // Crear nuevo equipo
+                    const newEquipment = {
+                        ...formData,
+                        id: formData.id || generateEquipmentId(),
+                        lastUpdate: new Date(),
+                        connectionStatus: 'unknown'
+                    };
+                    equipmentList.push(newEquipment);
+                    showSuccess('Equipo creado exitosamente');
+                }
+
+                closeModal();
+                filterEquipment(); // Refresh view
+                
+                saveButton.textContent = originalText;
+                saveButton.disabled = false;
+
+            } catch (error) {
+                console.error('Error guardando equipo:', error);
+                showError('Error guardando el equipo');
+                
+                const saveButton = document.getElementById('saveButton');
+                saveButton.disabled = false;
+            }
+        }
+
+        async function deleteEquipment(equipmentId) {
+            const equipment = equipmentList.find(eq => eq.id === equipmentId);
+            if (!equipment) return;
+
+            if (!confirm(`¿Estás seguro de que quieres eliminar el equipo "${equipment.name}"?\n\nEsta acción no se puede deshacer.`)) {
+                return;
+            }
+
+            try {
+                // TODO: Llamar a API de eliminación
+                // await fetch(`/api/admin/equipment/${equipmentId}`, { method: 'DELETE' });
+
+                equipmentList = equipmentList.filter(eq => eq.id !== equipmentId);
+                filterEquipment(); // Refresh view
+                showSuccess('Equipo eliminado exitosamente');
+                
+            } catch (error) {
+                console.error('Error eliminando equipo:', error);
+                showError('Error eliminando el equipo');
+            }
+        }
+
+        async function testConnection(equipmentId) {
+            const equipment = equipmentList.find(eq => eq.id === equipmentId);
+            if (!equipment) return;
+
+            try {
+                // Indicar que se está probando
+                const card = event.target.closest('.equipment-card');
+                const indicator = card.querySelector('.connection-indicator');
+                const originalClass = indicator.className;
+                indicator.className = 'connection-indicator unknown';
+
+                // TODO: Probar conexión real con CSV
+                // const response = await fetch(`/api/admin/equipment/${equipmentId}/test`);
+                
+                // Simular prueba de conexión
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Mock result
+                const isConnected = Math.random() > 0.3; // 70% éxito
+                
+                if (isConnected) {
+                    equipment.connectionStatus = 'connected';
+                    equipment.lastUpdate = new Date();
+                    showSuccess(`Conexión exitosa con ${equipment.name}`);
+                } else {
+                    equipment.connectionStatus = 'disconnected';
+                    showError(`No se pudo conectar con ${equipment.name}. Verificar URL del CSV.`);
+                }
+
+                renderEquipment(); // Refresh to show updated status
+
+            } catch (error) {
+                console.error('Error probando conexión:', error);
+                showError('Error probando la conexión');
+            }
+        }
+
+        function generateEquipmentId() {
+            const timestamp = Date.now().toString().slice(-6);
+            return `eq${timestamp}`;
+        }
+
+        // =============================================================================
+        // EVENT LISTENERS
+        // =============================================================================
+
+        // Cerrar modal con Escape
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('equipmentModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeModal();
+            }
+        });
+
+        // Auto-refresh cada 30 segundos
+        setInterval(() => {
+            if (!document.getElementById('equipmentModal').classList.contains('show')) {
+                refreshEquipment();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
