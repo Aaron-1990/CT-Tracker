@@ -334,3 +334,86 @@ process.on('unhandledRejection', (reason, promise) => {
 startServer();
 
 module.exports = { app, server, wss };
+
+// Agregar al server.js existente - Nuevas rutas para datos reales GPEC5
+
+const RealDataController = require('./src/presentation/controllers/public/RealDataController');
+const WebSocket = require('ws');
+
+// Inicializar controlador de datos reales
+const realDataController = new RealDataController();
+
+// ===== RUTAS API PARA DATOS REALES GPEC5 =====
+
+// Configuración de equipos y procesos GPEC5
+app.get('/api/gpec5/configuration', realDataController.getConfiguration.bind(realDataController));
+
+// Datos en tiempo real de toda la línea GPEC5
+app.get('/api/gpec5/data/live', realDataController.getLiveData.bind(realDataController));
+
+// Datos de proceso específico
+app.get('/api/gpec5/process/:processName', realDataController.getProcessData.bind(realDataController));
+
+// Control de polling
+app.post('/api/gpec5/polling/start', realDataController.startPolling.bind(realDataController));
+app.post('/api/gpec5/polling/stop', realDataController.stopPolling.bind(realDataController));
+
+// Estadísticas del sistema
+app.get('/api/gpec5/stats', realDataController.getSystemStats.bind(realDataController));
+
+// ===== WEBSOCKET PARA TIEMPO REAL =====
+
+// Crear servidor WebSocket
+const wss = new WebSocket.Server({ 
+    port: parseInt(process.env.WEBSOCKET_PORT) || 3002,
+    path: '/gpec5-realtime'
+});
+
+wss.on('connection', (ws) => {
+    realDataController.handleWebSocketConnection(ws);
+});
+
+// ===== INICIALIZACIÓN AUTOMÁTICA =====
+
+// Iniciar polling automáticamente al arrancar el servidor
+setTimeout(async () => {
+    try {
+        console.log('🚀 Iniciando polling automático GPEC5...');
+        await realDataController.startPolling({ body: {} }, {
+            json: (response) => {
+                if (response.success) {
+                    console.log('✅ Polling GPEC5 iniciado automáticamente');
+                } else {
+                    console.error('❌ Error iniciando polling:', response.error);
+                }
+            }
+        });
+    } catch (error) {
+        console.error('❌ Error en inicialización automática:', error.message);
+    }
+}, 5000); // Esperar 5 segundos después del inicio del servidor
+
+// ===== CLEANUP AL CERRAR =====
+
+process.on('SIGINT', () => {
+    console.log('🛑 Cerrando servidor...');
+    realDataController.cleanup();
+    wss.close();
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('🛑 Terminando servidor...');
+    realDataController.cleanup();
+    wss.close();
+    process.exit(0);
+});
+
+console.log('🔗 Rutas GPEC5 configuradas:');
+console.log('   GET  /api/gpec5/configuration');
+console.log('   GET  /api/gpec5/data/live');
+console.log('   GET  /api/gpec5/process/:processName');
+console.log('   POST /api/gpec5/polling/start');
+console.log('   POST /api/gpec5/polling/stop');
+console.log('   GET  /api/gpec5/stats');
+console.log(`🌐 WebSocket disponible en: ws://localhost:${parseInt(process.env.WEBSOCKET_PORT) || 3002}/gpec5-realtime`);

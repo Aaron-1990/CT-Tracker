@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración Rápida de CSVs - VSM</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            margin: 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .form-container {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .inline-group {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.3);
+        }
+        
+        .equipment-preview {
+            background: white;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .equipment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #ecf0f1;
+            border-radius: 6px;
+        }
+        
+        .equipment-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .equipment-details {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .remove-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success { background: #27ae60; }
+        .status-warning { background: #f39c12; }
+        .status-error { background: #e74c3c; }
+        
+        .help-text {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .progress-container {
+            background: #ecf0f1;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            background: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 20px;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .next-steps {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-left: 5px solid #3498db;
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .next-steps h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .next-steps ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .next-steps li {
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .next-steps li:last-child {
+            border-bottom: none;
+        }
+        
+        .next-steps li::before {
+            content: "✅ ";
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 Configuración Rápida de CSVs</h1>
+            <p>Conecta tus archivos CSV reales para visualizar tiempos de ciclo en tiempo real</p>
+        </div>
+
+        <div class="form-container">
+            <!-- Sección de configuración de equipos -->
+            <div class="section">
+                <h3>🔧 Agregar Equipos con CSV</h3>
+                
+                <div class="form-group">
+                    <label for="equipmentName">Nombre del Equipo</label>
+                    <input type="text" id="equipmentName" placeholder="Ej: Cover Press A, Soldadura 1, etc.">
+                    <div class="help-text">Nombre descriptivo para identificar el equipo en el VSM</div>
+                </div>
+                
+                <div class="inline-group">
+                    <div class="form-group">
+                        <label for="csvPath">Ruta del archivo CSV</label>
+                        <input type="text" id="csvPath" placeholder="\\server\data\coverpress_a.csv">
+                        <div class="help-text">Ruta completa al archivo CSV (UNC o local)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="designTime">Tiempo Diseño (seg)</label>
+                        <input type="number" id="designTime" placeholder="45" min="1" max="7200">
+                        <div class="help-text">Tiempo de ciclo objetivo</div>
+                    </div>
+                </div>
+                
+                <div class="inline-group">
+                    <div class="form-group">
+                        <label for="pollingInterval">Intervalo Polling (seg)</label>
+                        <select id="pollingInterval">
+                            <option value="30" selected>30 segundos</option>
+                            <option value="15">15 segundos</option>
+                            <option value="60">1 minuto</option>
+                            <option value="120">2 minutos</option>
+                            <option value="300">5 minutos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="equipmentType">Tipo de Equipo</label>
+                        <select id="equipmentType">
+                            <option value="production">Producción</option>
+                            <option value="assembly">Ensamble</option>
+                            <option value="quality">Control Calidad</option>
+                            <option value="packaging">Empaque</option>
+                            <option value="welding">Soldadura</option>
+                            <option value="machining">Maquinado</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="addEquipment()">
+                    ➕ Agregar Equipo
+                </button>
+            </div>
+
+            <!-- Preview de equipos agregados -->
+            <div class="section">
+                <h3>📋 Equipos Configurados</h3>
+                <div id="equipmentPreview" class="equipment-preview">
+                    <p style="text-align: center; color: #7f8c8d; font-style: italic;">
+                        No hay equipos configurados. Agrega tu primer equipo arriba.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Progreso y siguiente paso -->
+            <div class="progress-container">
+                <h4>🎯 Progreso de Configuración</h4>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p id="progressText">0% - Agrega al menos 1 equipo para continuar</p>
+            </div>
+            
+            <div class="next-steps">
+                <h4>🚀 Próximos Pasos Automáticos:</h4>
+                <ul>
+                    <li>Validar conexión a archivos CSV</li>
+                    <li>Crear línea VSM con drag & drop</li>
+                    <li>Configurar detección outliers ±2σ</li>
+                    <li>Visualizar tiempos en dashboard en tiempo real</li>
+                    <li>Análisis automático según tu visión VSM</li>
+                </ul>
+            </div>
+
+            <button class="btn btn-secondary" onclick="createVSMDashboard()" id="createDashboardBtn" disabled>
+                🗺️ Crear Dashboard VSM y Visualizar Datos
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let equipmentList = [];
+        let equipmentCounter = 0;
+
+        function addEquipment() {
+            const name = document.getElementById('equipmentName').value.trim();
+            const csvPath = document.getElementById('csvPath').value.trim();
+            const designTime = parseFloat(document.getElementById('designTime').value);
+            const pollingInterval = parseInt(document.getElementById('pollingInterval').value);
+            const equipmentType = document.getElementById('equipmentType').value;
+
+            // Validaciones básicas
+            if (!name) {
+                alert('⚠️ Por favor ingresa un nombre para el equipo');
+                document.getElementById('equipmentName').focus();
+                return;
+            }
+
+            if (!csvPath) {
+                alert('⚠️ Por favor ingresa la ruta del archivo CSV');
+                document.getElementById('csvPath').focus();
+                return;
+            }
+
+            if (!designTime || designTime <= 0) {
+                alert('⚠️ Por favor ingresa un tiempo de diseño válido');
+                document.getElementById('designTime').focus();
+                return;
+            }
+
+            // Verificar duplicados
+            if (equipmentList.find(eq => eq.name === name)) {
+                alert('⚠️ Ya existe un equipo con ese nombre');
+                return;
+            }
+
+            // Crear equipo
+            equipmentCounter++;
+            const equipment = {
+                id: equipmentCounter,
+                name: name,
+                csvPath: csvPath,
+                designTime: designTime,
+                pollingInterval: pollingInterval,
+                type: equipmentType,
+                status: 'configured',
+                dateAdded: new Date()
+            };
+
+            equipmentList.push(equipment);
+
+            // Limpiar formulario
+            document.getElementById('equipmentName').value = '';
+            document.getElementById('csvPath').value = '';
+            document.getElementById('designTime').value = '';
+
+            // Actualizar vista
+            updateEquipmentPreview();
+            updateProgress();
+            
+            console.log('✅ Equipo agregado:', equipment);
+        }
+
+        function removeEquipment(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar este equipo?')) {
+                equipmentList = equipmentList.filter(eq => eq.id !== id);
+                updateEquipmentPreview();
+                updateProgress();
+            }
+        }
+
+        function updateEquipmentPreview() {
+            const preview = document.getElementById('equipmentPreview');
+            
+            if (equipmentList.length === 0) {
+                preview.innerHTML = `
+                    <p style="text-align: center; color: #7f8c8d; font-style: italic;">
+                        No hay equipos configurados. Agrega tu primer equipo arriba.
+                    </p>
+                `;
+                return;
+            }
+
+            let html = '';
+            equipmentList.forEach(equipment => {
+                html += `
+                    <div class="equipment-item">
+                        <div>
+                            <div class="equipment-name">
+                                <span class="status-indicator status-success"></span>
+                                ${equipment.name}
+                            </div>
+                            <div class="equipment-details">
+                                📄 ${equipment.csvPath} | ⚙️ ${equipment.designTime}s | 🔄 ${equipment.pollingInterval}s | 🏷️ ${equipment.type}
+                            </div>
+                        </div>
+                        <button class="remove-btn" onclick="removeEquipment(${equipment.id})">❌</button>
+                    </div>
+                `;
+            });
+
+            preview.innerHTML = html;
+        }
+
+        function updateProgress() {
+            const progress = Math.min((equipmentList.length / 3) * 100, 100);
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const createBtn = document.getElementById('createDashboardBtn');
+
+            progressFill.style.width = progress + '%';
+            
+            if (equipmentList.length === 0) {
+                progressText.textContent = '0% - Agrega al menos 1 equipo para continuar';
+                createBtn.disabled = true;
+            } else if (equipmentList.length < 3) {
+                progressText.textContent = `${Math.round(progress)}% - Configurados ${equipmentList.length} equipos. Recomendado: al menos 3 para VSM completo`;
+                createBtn.disabled = false;
+                createBtn.textContent = '🗺️ Crear Dashboard VSM (Configuración Básica)';
+            } else {
+                progressText.textContent = `${Math.round(progress)}% - ¡Excelente! Configuración completa para VSM avanzado`;
+                createBtn.disabled = false;
+                createBtn.textContent = '🗺️ Crear Dashboard VSM Completo';
+            }
+        }
+
+        async function createVSMDashboard() {
+            if (equipmentList.length === 0) {
+                alert('⚠️ Agrega al menos un equipo antes de crear el dashboard');
+                return;
+            }
+
+            // Simular creación de dashboard
+            const loadingMessage = document.createElement('div');
+            loadingMessage.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                color: white;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                font-size: 1.5rem;
+                z-index: 1000;
+            `;
+            
+            loadingMessage.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">🔄</div>
+                    <div style="margin-bottom: 10px;">Creando Dashboard VSM...</div>
+                    <div style="font-size: 1rem; opacity: 0.8;">Configurando equipos y métricas en tiempo real</div>
+                </div>
+            `;
+            
+            document.body.appendChild(loadingMessage);
+
+            try {
+                // Simular proceso de creación
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Guardar configuración
+                localStorage.setItem('vsmEquipmentConfig', JSON.stringify(equipmentList));
+                
+                // Mostrar éxito
+                loadingMessage.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
+                        <div style="margin-bottom: 10px;">¡Dashboard VSM Creado!</div>
+                        <div style="font-size: 1rem; opacity: 0.8;">Redirigiendo a visualización en tiempo real...</div>
+                    </div>
+                `;
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Crear configuración para line-builder
+                const lineConfig = {
+                    name: 'Línea de Producción Principal',
+                    description: 'Línea creada desde configuración rápida de CSVs',
+                    equipment: equipmentList,
+                    autoCreated: true,
+                    createdAt: new Date().toISOString()
+                };
+
+                localStorage.setItem('vsmAutoLineConfig', JSON.stringify(lineConfig));
+
+                // Redirigir al dashboard VSM
+                window.location.href = 'value-stream-map.html?auto=true';
+
+            } catch (error) {
+                console.error('Error creando dashboard:', error);
+                loadingMessage.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 4rem; margin-bottom: 20px;">❌</div>
+                        <div style="margin-bottom: 10px;">Error creando dashboard</div>
+                        <div style="font-size: 1rem; opacity: 0.8;">Intenta nuevamente</div>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    document.body.removeChild(loadingMessage);
+                }, 3000);
+            }
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔗 Configuración rápida CSV iniciada');
+            
+            // Cargar configuración existente si existe
+            const savedConfig = localStorage.getItem('vsmEquipmentConfig');
+            if (savedConfig) {
+                try {
+                    equipmentList = JSON.parse(savedConfig);
+                    equipmentCounter = Math.max(...equipmentList.map(eq => eq.id), 0);
+                    updateEquipmentPreview();
+                    updateProgress();
+                    console.log('📋 Configuración previa cargada:', equipmentList.length, 'equipos');
+                } catch (error) {
+                    console.error('Error cargando configuración previa:', error);
+                }
+            }
+            
+            // Focus inicial
+            document.getElementById('equipmentName').focus();
+        });
+
+        // Atajos de teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                addEquipment();
+            }
+        });
+
+        console.log('🔗 Sistema de configuración rápida listo');
+        console.log('💡 Tip: Usa Ctrl+Enter para agregar equipo rápidamente');
+    </script>
+</body>
+</html>
