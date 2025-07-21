@@ -1,0 +1,205 @@
+// =============================================================================
+// config/database.js - Configuración de PostgreSQL
+// =============================================================================
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const pool = new Pool({
+    user: process.env.DB_USER || 'postgres',
+    host: process.env.DB_HOST || 'localhost',
+    database: process.env.DB_NAME || 'vsm_production',
+    password: process.env.DB_PASSWORD || 'password',
+    port: process.env.DB_PORT || 5432,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+});
+
+// Test de conexión
+pool.on('connect', () => {
+    console.log('✅ Conectado a PostgreSQL');
+});
+
+pool.on('error', (err) => {
+    console.error('❌ Error en la conexión PostgreSQL:', err);
+    process.exit(-1);
+});
+
+module.exports = pool;
+
+// =============================================================================
+// config/environment.js - Variables de entorno
+// =============================================================================
+require('dotenv').config();
+
+const environment = {
+    // Servidor
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    PORT: parseInt(process.env.PORT) || 3000,
+    
+    // Base de datos
+    DATABASE: {
+        HOST: process.env.DB_HOST || 'localhost',
+        PORT: parseInt(process.env.DB_PORT) || 5432,
+        NAME: process.env.DB_NAME || 'vsm_production',
+        USER: process.env.DB_USER || 'postgres',
+        PASSWORD: process.env.DB_PASSWORD || 'password',
+        SSL: process.env.DB_SSL === 'true'
+    },
+    
+    // Seguridad
+    SECURITY: {
+        ALLOWED_IPS: (process.env.ALLOWED_IPS || '127.0.0.1,10.45.126.67,10.43.126.73').split(','),
+        SESSION_SECRET: process.env.SESSION_SECRET || 'vsm-secret-key-change-in-production'
+    },
+    
+    // VSM Settings
+    VSM: {
+        // Detección de outliers
+        OUTLIER_DETECTION: {
+            STANDARD_DEVIATION_MULTIPLIER: parseFloat(process.env.OUTLIER_STD_MULTIPLIER) || 2.0,
+            MINIMUM_SAMPLE_SIZE: parseInt(process.env.OUTLIER_MIN_SAMPLES) || 5,
+            MAX_OUTLIER_PERCENTAGE: parseFloat(process.env.OUTLIER_MAX_PERCENTAGE) || 25
+        },
+        
+        // Configuración de polling CSV
+        CSV_POLLING: {
+            DEFAULT_INTERVAL_SECONDS: parseInt(process.env.CSV_POLLING_INTERVAL) || 30,
+            TIMEOUT_SECONDS: parseInt(process.env.CSV_TIMEOUT) || 10,
+            MAX_RETRIES: parseInt(process.env.CSV_MAX_RETRIES) || 3
+        },
+        
+        // Configuración de cálculos
+        CALCULATIONS: {
+            HOURLY_CALCULATION_CRON: process.env.HOURLY_CALC_CRON || '0 * * * *',
+            STATISTICAL_UPDATE_CRON: process.env.STATS_UPDATE_CRON || '*/5 * * * *',
+            MAINTENANCE_CRON: process.env.MAINTENANCE_CRON || '0 2 * * *'
+        }
+    },
+    
+    // Logging
+    LOGGING: {
+        LEVEL: process.env.LOG_LEVEL || 'info',
+        FILE_ENABLED: process.env.LOG_FILE_ENABLED === 'true',
+        FILE_PATH: process.env.LOG_FILE_PATH || './logs/app.log'
+    },
+    
+    // WebSocket
+    WEBSOCKET: {
+        ENABLED: process.env.WEBSOCKET_ENABLED !== 'false',
+        PORT: parseInt(process.env.WEBSOCKET_PORT) || 3001
+    }
+};
+
+module.exports = environment;
+
+// =============================================================================
+// config/logger.js - Configuración de Winston
+// =============================================================================
+const winston = require('winston');
+const environment = require('./environment');
+
+const logger = winston.createLogger({
+    level: environment.LOGGING.LEVEL,
+    format: winston.format.combine(
+        winston.format.timestamp({
+            format: 'YYYY-MM-DD HH:mm:ss'
+        }),
+        winston.format.errors({ stack: true }),
+        winston.format.printf(({ level, message, timestamp, stack }) => {
+            return `${timestamp} [${level.toUpperCase()}]: ${stack || message}`;
+        })
+    ),
+    defaultMeta: { service: 'vsm-server' },
+    transports: [
+        new winston.transports.Console({
+            format: winston.format.combine(
+                winston.format.colorize(),
+                winston.format.simple()
+            )
+        })
+    ]
+});
+
+// Agregar archivo de log si está habilitado
+if (environment.LOGGING.FILE_ENABLED) {
+    logger.add(new winston.transports.File({
+        filename: environment.LOGGING.FILE_PATH,
+        format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.json()
+        )
+    }));
+}
+
+module.exports = logger;
+
+// =============================================================================
+// config/security.js - Configuración de seguridad IP
+// =============================================================================
+const environment = require('./environment');
+const logger = require('./logger');
+
+/**
+ * Middleware para filtrar acceso por IP
+ */
+function ipFilterMiddleware(req, res, next) {
+    // Obtener la IP del cliente
+    const clientIP = (req.ip || 
+                     req.connection.remoteAddress || 
+                     req.socket.remoteAddress ||
+                     (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+                     req.headers['x-forwarded-for'] ||
+                     req.headers['x-real-ip'])
+                     .replace(/^::ffff:/, ''); // Limpiar formato IPv6
+    
+    const allowedIPs = environment.SECURITY.ALLOWED_IPS;
+    
+    logger.debug(`Solicitud desde IP: ${clientIP}`);
+    
+    // Verificar si la IP está permitida
+    if (allowedIPs.includes(clientIP) || allowedIPs.includes('*')) {
+        logger.debug(`IP permitida: ${clientIP}`);
+        next();
+    } else {
+        logger.warn(`Acceso denegado desde IP: ${clientIP}`);
+        res.status(403).json({
+            error: 'Acceso denegado',
+            message: 'Su dirección IP no tiene permisos para acceder a este servidor.',
+            timestamp: new Date().toISOString()
+        });
+    }
+}
+
+/**
+ * Configuración de CORS para el proyecto
+ */
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Permitir requests sin origen (aplicaciones móviles, Postman, etc.)
+        if (!origin) return callback(null, true);
+        
+        // En desarrollo, permitir cualquier origen
+        if (environment.NODE_ENV === 'development') {
+            return callback(null, true);
+        }
+        
+        // En producción, verificar origen contra IPs permitidas
+        const allowedOrigins = environment.SECURITY.ALLOWED_IPS.map(ip => 
+            `http://${ip}:${environment.PORT}`
+        );
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('No permitido por CORS'));
+        }
+    },
+    credentials: true
+};
+
+module.exports = {
+    ipFilterMiddleware,
+    corsOptions,
+    allowedIPs: environment.SECURITY.ALLOWED_IPS
+};
