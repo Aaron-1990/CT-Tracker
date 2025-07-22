@@ -1,5 +1,4 @@
 // src/infrastructure/external/RealCSVFetcher.js
-const CSVExtractor = require('./CSVExtractor');
 const axios = require('axios');
 const logger = require('../../config/logger');
 
@@ -101,23 +100,6 @@ class RealCSVFetcher {
         this.pollingInterval = 30000; // 30 segundos
         this.cache = new Map();
         this.lastFetchTimes = new Map();
-        this.csvExtractor = new CSVExtractor();
-    }
-
-    // AGREGAR este método después del constructor:
-    /**
-     * Obtener ID de equipo desde URL
-     */
-    getEquipmentIdFromUrl(url) {
-        for (const [equipmentId, equipmentUrl] of this.equipmentUrls) {
-            if (equipmentUrl === url) {
-                return equipmentId;
-            }
-        }
-        
-        // Fallback: extraer del parámetro view en la URL
-        const match = url.match(/view=CycleRec_([^.]+)\.csv/);
-        return match ? match[1] : 'UNKNOWN';
     }
 
     /**
@@ -125,44 +107,150 @@ class RealCSVFetcher {
      * @param {string} equipmentId - ID del equipo
      * @returns {Promise<Array>} Datos parseados del CSV
      */
-    async fetchCSVData(url, retries = 0) {
-        const equipmentId = this.getEquipmentIdFromUrl(url);
+    async fetchCSVData(equipmentId) {
+        const url = this.equipmentUrls.get(equipmentId);
+        if (!url) {
+            throw new Error(`URL no encontrada para equipo: ${equipmentId}`);
+        }
+
+        const lastFetch = this.lastFetchTimes.get(equipmentId);
+        const now = Date.now();
         
-        try {
-            logger.info(`🔍 Fetching CSV data for ${equipmentId}, attempt ${retries + 1}`);
-            
-            // Usar el extractor de CSV real
-            const result = await this.csvExtractor.obtenerDatosCSV(url, equipmentId);
-            
-            if (result.isReal && result.records.length > 0) {
-                // Datos reales obtenidos exitosamente
-                logger.info(`✅ CSV data fetched successfully for ${equipmentId}: ${result.recordCount} records (REAL DATA)`);
-                
-                // Procesar los registros para nuestro formato
-                return this.procesarRegistrosReales(result);
-                
-            } else {
-                // Fallback a datos simulados
-                logger.warn(`⚠️ Using fallback data for ${equipmentId}: ${result.reason || 'Unknown reason'}`);
-                return this.generateFallbackData(equipmentId);
+        // Cache por 30 segundos para evitar requests excesivos
+        if (lastFetch && (now - lastFetch) < 30000) {
+            const cached = this.cache.get(equipmentId);
+            if (cached) {
+                logger.debug(`Usando cache para equipo ${equipmentId}`);
+                return cached;
             }
-            
-        } catch (error) {
-            logger.error(`❌ Error fetching CSV from ${url}:`, error.message);
-            
-            if (retries < this.retryAttempts) {
-                logger.info(`🔄 Retrying... (${retries + 1}/${this.retryAttempts})`);
-                await new Promise(resolve => setTimeout(resolve, 1000 * (retries + 1)));
-                return this.fetchCSVData(url, retries + 1);
+        }
+
+        let attempt = 0;
+        while (attempt < this.retryAttempts) {
+            try {
+                logger.info(`Fetching CSV data for ${equipmentId}, attempt ${attempt + 1}`);
+                
+                const response = await axios.get(url, {
+                    timeout: this.requestTimeout,
+                    headers: {
+                        'User-Agent': 'VSM-Monitor/1.0',
+                        'Accept': 'text/csv,text/plain,*/*'
+                    }
+                });
+
+                if (response.status === 200 && response.data) {
+                    const parsedData = this.parseCSVData(response.data, equipmentId);
+                    
+                    // Actualizar cache
+                    this.cache.set(equipmentId, parsedData);
+                    this.lastFetchTimes.set(equipmentId, now);
+                    
+                    logger.info(`✅ CSV data fetched successfully for ${equipmentId}: ${parsedData.length} records`);
+                    return parsedData;
+                } else {
+                    throw new Error(`Invalid response: ${response.status}`);
+                }
+
+            } catch (error) {
+                attempt++;
+                logger.warn(`❌ Error fetching ${equipmentId} (attempt ${attempt}):`, error.message);
+                
+                if (attempt >= this.retryAttempts) {
+                    logger.error(`Failed to fetch data for ${equipmentId} after ${this.retryAttempts} attempts`);
+                    throw error;
+                }
+                
+                // Esperar antes del retry
+                await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
             }
-            
-            // Fallback final
-            logger.warn(`🔄 Max retries reached for ${equipmentId}, using fallback data`);
-            return this.generateFallbackData(equipmentId);
         }
     }
 
-    
+    /**
+     * Parsear datos CSV según tu formato específico
+     * Formato: Serial,Línea,Parte,Proceso,Equipo,Estado,Timestamp
+     */
+    parseCSVData(csvText, equipmentId) {
+        const lines = csvText.split('\n').filter(line => line.trim());
+        const records = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            try {
+                // Tu formato: 64125090026109,GPEC5,66829616,HTFT,HTFT_01,BREQ,07/21/2025 07:07:04
+                const parts = line.split(',');
+                
+                if (parts.length >= 7) {
+                    const record = {
+                        serial: parts[0].trim(),
+                        line: parts[1].trim(),
+                        partNumber: parts[2].trim(),
+                        process: parts[3].trim(),
+                        equipment: parts[4].trim(),
+                        status: parts[5].trim(),
+                        timestamp: this.parseTimestamp(parts[6].trim()),
+                        rawTimestamp: parts[6].trim(),
+                        equipmentId: equipmentId,
+                        lineNumber: i + 1
+                    };
+
+                    // Validar que el registro tenga datos válidos
+                    if (this.validateRecord(record)) {
+                        records.push(record);
+                    }
+                }
+            } catch (error) {
+                logger.warn(`Error parsing line ${i + 1} for ${equipmentId}:`, error.message);
+            }
+        }
+
+        // Ordenar por timestamp (más recientes primero)
+        records.sort((a, b) => b.timestamp - a.timestamp);
+        
+        return records.slice(0, 1000); // Limitar a últimos 1000 registros
+    }
+
+    /**
+     * Parsear timestamp en formato: 07/21/2025 07:07:04
+     */
+    parseTimestamp(timestampStr) {
+        try {
+            // Formato: MM/DD/YYYY HH:mm:ss
+            const [datePart, timePart] = timestampStr.split(' ');
+            const [month, day, year] = datePart.split('/');
+            const [hour, minute, second] = timePart.split(':');
+            
+            return new Date(
+                parseInt(year),
+                parseInt(month) - 1, // JavaScript months are 0-based
+                parseInt(day),
+                parseInt(hour),
+                parseInt(minute),
+                parseInt(second)
+            );
+        } catch (error) {
+            logger.warn(`Error parsing timestamp: ${timestampStr}`, error.message);
+            return new Date(); // Fallback to current time
+        }
+    }
+
+    /**
+     * Validar registro CSV
+     */
+    validateRecord(record) {
+        return (
+            record.serial && record.serial.length > 0 &&
+            record.line === 'GPEC5' &&
+            record.partNumber && record.partNumber.length > 0 &&
+            record.process && record.process.length > 0 &&
+            record.equipment && record.equipment.length > 0 &&
+            record.status && ['BREQ', 'BCMP OK', 'BCMP NG'].includes(record.status) &&
+            record.timestamp instanceof Date && !isNaN(record.timestamp)
+        );
+    }
+
     /**
      * Obtener datos de todos los equipos de un proceso
      */
@@ -175,20 +263,13 @@ class RealCSVFetcher {
         const equipmentData = new Map();
         const promises = processConfig.equipments.map(async (equipmentId) => {
             try {
-                // CORREGIR: pasar URL, no equipmentId
-                const url = this.equipmentUrls.get(equipmentId);
-                if (!url) {
-                    throw new Error(`URL not found for equipment ${equipmentId}`);
-                }
-                
-                const data = await this.fetchCSVData(url);
+                const data = await this.fetchCSVData(equipmentId);
                 equipmentData.set(equipmentId, data);
                 return { equipmentId, data, success: true };
             } catch (error) {
                 logger.error(`Error fetching data for ${equipmentId}:`, error.message);
-                const fallbackData = this.generateFallbackData(equipmentId);
-                equipmentData.set(equipmentId, fallbackData);
-                return { equipmentId, data: fallbackData, success: false, error: error.message };
+                equipmentData.set(equipmentId, []);
+                return { equipmentId, data: [], success: false, error: error.message };
             }
         });
 
@@ -323,202 +404,6 @@ class RealCSVFetcher {
             pollingInterval: this.pollingInterval,
             requestTimeout: this.requestTimeout,
             retryAttempts: this.retryAttempts
-        };
-    }
-
-    /**
-     * Procesar registros reales en nuestro formato VSM
-     */
-    procesarRegistrosReales(result) {
-        const { equipmentId, records, recordCount, lastUpdate } = result;
-        
-        if (!records || records.length === 0) {
-            return this.generateFallbackData(equipmentId);
-        }
-        
-        // Calcular métricas reales basadas en los datos
-        const tiemposCiclo = [];
-        const eventos = [];
-        let piezasOK = 0;
-        let piezasNG = 0;
-        let piezasTotal = 0;
-        
-        // Procesar eventos para calcular tiempos de ciclo
-        let eventoAnterior = null;
-        
-        for (const registro of records) {
-            eventos.push(registro);
-            
-            // Contar piezas por tipo de evento
-            if (registro.event && registro.event.toLowerCase().includes('pass')) {
-                piezasOK++;
-                piezasTotal++;
-            } else if (registro.event && registro.event.toLowerCase().includes('fail')) {
-                piezasNG++;
-                piezasTotal++;
-            }
-            
-            // Calcular tiempo de ciclo entre eventos
-            if (eventoAnterior && registro.timestamp && eventoAnterior.timestamp) {
-                const diferenciaMs = registro.timestamp.getTime() - eventoAnterior.timestamp.getTime();
-                const diferenciaSeg = diferenciaMs / 1000;
-                
-                // Solo considerar tiempos de ciclo razonables (5 segundos a 5 minutos)
-                if (diferenciaSeg >= 5 && diferenciaSeg <= 300) {
-                    tiemposCiclo.push(diferenciaSeg);
-                }
-            }
-            
-            eventoAnterior = registro;
-        }
-        
-        // Calcular estadísticas
-        let tiempoCicloPromedio = 0;
-        let tiempoCicloActual = 0;
-        
-        if (tiemposCiclo.length > 0) {
-            tiempoCicloPromedio = tiemposCiclo.reduce((sum, t) => sum + t, 0) / tiemposCiclo.length;
-            tiempoCicloActual = tiemposCiclo[tiemposCiclo.length - 1] || tiempoCicloPromedio;
-        }
-        
-        // Análisis de outliers (±2σ)
-        const outlierAnalysis = this.analizarOutliers(tiemposCiclo);
-        
-        // Obtener timestamp más reciente
-        const timestamps = records.map(r => r.timestamp).filter(t => t);
-        const ultimoTimestamp = timestamps.length > 0 ? 
-            new Date(Math.max(...timestamps.map(t => t.getTime()))) : 
-            lastUpdate;
-        
-        return {
-            equipmentId,
-            data: records,
-            records: eventos,
-            cycleTimes: tiemposCiclo,
-            metrics: {
-                currentCycleTime: Math.round(tiempoCicloActual * 10) / 10,
-                averageCycleTime: Math.round(tiempoCicloPromedio * 10) / 10,
-                totalPieces: piezasTotal,
-                okPieces: piezasOK,
-                ngPieces: piezasNG,
-                qualityRate: piezasTotal > 0 ? (piezasOK / piezasTotal) * 100 : 100
-            },
-            outlierAnalysis,
-            timestamp: ultimoTimestamp,
-            lastUpdate: ultimoTimestamp.toISOString(),
-            recordCount: recordCount,
-            isRealData: true,
-            dataSource: 'CSV extraído de sistema Mantis'
-        };
-    }
-
-    /**
-     * Analizar outliers usando ±2σ como en el sistema original
-     */
-    analizarOutliers(tiemposCiclo) {
-        if (tiemposCiclo.length < 3) {
-            return {
-                outliers: [],
-                normal: tiemposCiclo,
-                mean: tiemposCiclo.length > 0 ? tiemposCiclo.reduce((sum, t) => sum + t, 0) / tiemposCiclo.length : 0,
-                stdDev: 0,
-                outlierPercentage: 0
-            };
-        }
-        
-        // Calcular media y desviación estándar
-        const mean = tiemposCiclo.reduce((sum, t) => sum + t, 0) / tiemposCiclo.length;
-        const variance = tiemposCiclo.reduce((sum, t) => sum + Math.pow(t - mean, 2), 0) / tiemposCiclo.length;
-        const stdDev = Math.sqrt(variance);
-        
-        // Detectar outliers (±2σ)
-        const lowerBound = mean - (2 * stdDev);
-        const upperBound = mean + (2 * stdDev);
-        
-        const outliers = [];
-        const normal = [];
-        
-        tiemposCiclo.forEach(tiempo => {
-            if (tiempo < lowerBound || tiempo > upperBound) {
-                outliers.push(tiempo);
-            } else {
-                normal.push(tiempo);
-            }
-        });
-        
-        return {
-            outliers,
-            normal,
-            mean: Math.round(mean * 10) / 10,
-            stdDev: Math.round(stdDev * 10) / 10,
-            outlierPercentage: Math.round((outliers.length / tiemposCiclo.length) * 100 * 10) / 10
-        };
-    }
-
-    /**
-     * Mejorar el método generateFallbackData existente
-     */
-    generateFallbackData(equipmentId) {
-        const now = new Date();
-        
-        // Generar datos más realistas basados en el equipo
-        const equipmentProfiles = {
-            'WAVESOLDER_01': { baseCycle: 45, variance: 5, quality: 0.95 },
-            'CONTINUITY_01': { baseCycle: 25, variance: 3, quality: 0.98 },
-            'CONTINUITY_02': { baseCycle: 24, variance: 3, quality: 0.97 },
-            'CONTINUITY_03': { baseCycle: 26, variance: 3, quality: 0.98 },
-            'PLASMA_R1': { baseCycle: 35, variance: 8, quality: 0.92 },
-            'PLASMA_R2': { baseCycle: 33, variance: 7, quality: 0.94 }
-            // ... agregar más según necesidad
-        };
-        
-        const profile = equipmentProfiles[equipmentId] || { baseCycle: 45, variance: 5, quality: 0.90 };
-        
-        // Simular algunos datos recientes
-        const simulatedRecords = [];
-        const simulatedCycleTimes = [];
-        
-        for (let i = 0; i < 10; i++) {
-            const cycleTime = profile.baseCycle + (Math.random() - 0.5) * profile.variance;
-            simulatedCycleTimes.push(cycleTime);
-            
-            const timestamp = new Date(now.getTime() - (i * 30000)); // Cada 30 segundos
-            simulatedRecords.push({
-                serial: `SIM_${equipmentId}_${i}`,
-                event: Math.random() < profile.quality ? 'PASS' : 'FAIL',
-                timestamp: timestamp,
-                station: equipmentId
-            });
-        }
-        
-        const totalPieces = Math.floor(Math.random() * 10) + 5;
-        const okPieces = Math.floor(totalPieces * profile.quality);
-        
-        return {
-            equipmentId,
-            data: simulatedRecords,
-            records: simulatedRecords,
-            cycleTimes: simulatedCycleTimes,
-            metrics: {
-                currentCycleTime: profile.baseCycle + (Math.random() - 0.5) * profile.variance,
-                averageCycleTime: profile.baseCycle,
-                totalPieces: totalPieces,
-                okPieces: okPieces,
-                ngPieces: totalPieces - okPieces,
-                qualityRate: (okPieces / totalPieces) * 100
-            },
-            outlierAnalysis: {
-                outliers: [],
-                normal: simulatedCycleTimes,
-                mean: profile.baseCycle,
-                stdDev: profile.variance / 2,
-                outlierPercentage: Math.random() * 5
-            },
-            timestamp: now,
-            lastUpdate: now.toISOString(),
-            recordCount: Math.floor(Math.random() * 500) + 300,
-            isRealData: false,
-            dataSource: 'Simulación realista'
         };
     }
 }

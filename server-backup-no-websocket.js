@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // server.js - Servidor principal VSM (Value Stream Map) - CON INTEGRACIÓN GPEC5
 // =============================================================================
 
@@ -348,7 +348,7 @@ async function startServer() {
 let wssGPEC5 = null;
 try {
     wssGPEC5 = new WebSocket.Server({ 
-        port: parseInt(process.env.WEBSOCKET_PORT_GPEC5) || 3003,
+        port: parseInt(process.env.WEBSOCKET_PORT_GPEC5) || 3002,
         path: '/gpec5-realtime'
     });
 
@@ -356,7 +356,7 @@ try {
         realDataController.handleWebSocketConnection(ws);
     });
 
-    logger.info(`🌐 WebSocket GPEC5 disponible en: ws://localhost:${parseInt(process.env.WEBSOCKET_PORT_GPEC5) || 3003}/gpec5-realtime`);
+    logger.info(`🌐 WebSocket GPEC5 disponible en: ws://localhost:${parseInt(process.env.WEBSOCKET_PORT_GPEC5) || 3002}/gpec5-realtime`);
 } catch (error) {
     logger.error('❌ Error iniciando WebSocket GPEC5:', error.message);
 }

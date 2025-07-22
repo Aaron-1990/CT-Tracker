@@ -1,5 +1,5 @@
 ﻿// =============================================================================
-// server.js - Servidor principal VSM (Value Stream Map) - CON INTEGRACIÓN GPEC5
+// server.js - Servidor principal VSM (Value Stream Map) - CON INTEGRACIÃ“N GPEC5
 // =============================================================================
 
 const express = require('express');
@@ -11,16 +11,16 @@ const compression = require('compression');
 const http = require('http');
 const WebSocket = require('ws');
 
-// Configuración
+// ConfiguraciÃ³n
 const environment = require('./config/environment');
 const logger = require('./config/logger');
 const { ipFilterMiddleware, corsOptions } = require('./config/security');
 const database = require('./config/database');
 
-// ===== INTEGRACIÓN GPEC5 =====
+// ===== INTEGRACIÃ“N GPEC5 =====
 const RealDataController = require('./src/presentation/controllers/public/RealDataController');
 
-// Crear aplicación Express
+// Crear aplicaciÃ³n Express
 const app = express();
 const server = http.createServer(app);
 
@@ -28,7 +28,7 @@ const server = http.createServer(app);
 const realDataController = new RealDataController();
 
 // =============================================================================
-// MIDDLEWARE DE SEGURIDAD Y CONFIGURACIÓN
+// MIDDLEWARE DE SEGURIDAD Y CONFIGURACIÃ“N
 // =============================================================================
 
 // Helmet para headers de seguridad
@@ -44,7 +44,7 @@ app.use(helmet({
     },
 }));
 
-// Compresión
+// CompresiÃ³n
 app.use(compression());
 
 // CORS
@@ -67,7 +67,7 @@ app.set('trust proxy', true);
 // Middleware de filtrado por IP
 app.use(ipFilterMiddleware);
 
-// Servir archivos estáticos
+// Servir archivos estÃ¡ticos
 app.use(express.static(path.join(__dirname, 'public')));
 
 // =============================================================================
@@ -90,7 +90,7 @@ if (environment.WEBSOCKET.ENABLED) {
                 const data = JSON.parse(message);
                 logger.debug('WebSocket mensaje recibido:', data);
                 
-                // Aquí se puede manejar diferentes tipos de mensajes
+                // AquÃ­ se puede manejar diferentes tipos de mensajes
                 switch (data.type) {
                     case 'subscribe':
                         ws.subscriptions = data.channels || [];
@@ -124,7 +124,7 @@ if (environment.WEBSOCKET.ENABLED) {
         }));
     });
 
-    // Función para broadcast a todos los clientes conectados
+    // FunciÃ³n para broadcast a todos los clientes conectados
     global.broadcastToClients = (data) => {
         if (!wss) return;
         
@@ -135,7 +135,7 @@ if (environment.WEBSOCKET.ENABLED) {
         });
     };
 
-    logger.info('✅ WebSocket Server iniciado en /ws');
+    logger.info('âœ… WebSocket Server iniciado en /ws');
 }
 
 // =============================================================================
@@ -167,7 +167,7 @@ app.get('/api/status', (req, res) => {
         server: require('os').hostname(),
         nodejs: process.version,
         environment: environment.NODE_ENV,
-        database: 'connected', // TODO: verificar conexión real
+        database: 'connected', // TODO: verificar conexiÃ³n real
         clients: wss ? wss.clients.size : 0,
         gpec5: {
             active: true,
@@ -186,17 +186,17 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard', 'index.html'));
 });
 
-// Panel de administración
+// Panel de administraciÃ³n
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html'));
 });
 
-// Constructor de líneas de producción
+// Constructor de lÃ­neas de producciÃ³n
 app.get('/admin/line-builder', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin', 'line-builder.html'));
 });
 
-// Vista específica de Value Stream Map
+// Vista especÃ­fica de Value Stream Map
 app.get('/vsm/:lineCode', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard', 'value-stream-map.html'));
 });
@@ -211,20 +211,20 @@ app.get('/gpec5', (req, res) => {
 // =============================================================================
 
 // ===== RUTAS API GPEC5 - DATOS REALES =====
-// Configuración de equipos y procesos GPEC5
+// ConfiguraciÃ³n de equipos y procesos GPEC5
 app.get('/api/gpec5/configuration', realDataController.getConfiguration.bind(realDataController));
 
-// Datos en tiempo real de toda la línea GPEC5
+// Datos en tiempo real de toda la lÃ­nea GPEC5
 app.get('/api/gpec5/data/live', realDataController.getLiveData.bind(realDataController));
 
-// Datos de proceso específico
+// Datos de proceso especÃ­fico
 app.get('/api/gpec5/process/:processName', realDataController.getProcessData.bind(realDataController));
 
 // Control de polling
 app.post('/api/gpec5/polling/start', realDataController.startPolling.bind(realDataController));
 app.post('/api/gpec5/polling/stop', realDataController.stopPolling.bind(realDataController));
 
-// Estadísticas del sistema
+// EstadÃ­sticas del sistema
 app.get('/api/gpec5/stats', realDataController.getSystemStats.bind(realDataController));
 
 // ===== RUTAS API GENERALES (EXISTENTES) =====
@@ -235,7 +235,7 @@ app.get('/api/gpec5/stats', realDataController.getSystemStats.bind(realDataContr
 // Placeholder para las rutas principales de la API
 app.get('/api/production-lines', (req, res) => {
     res.json({
-        message: 'API de líneas de producción - Pendiente de implementar',
+        message: 'API de lÃ­neas de producciÃ³n - Pendiente de implementar',
         timestamp: new Date().toISOString()
     });
 });
@@ -243,7 +243,7 @@ app.get('/api/production-lines', (req, res) => {
 app.get('/api/vsm/:lineCode', (req, res) => {
     const { lineCode } = req.params;
     res.json({
-        message: `VSM para línea ${lineCode} - Pendiente de implementar`,
+        message: `VSM para lÃ­nea ${lineCode} - Pendiente de implementar`,
         lineCode,
         timestamp: new Date().toISOString()
     });
@@ -285,14 +285,14 @@ app.use((err, req, res, next) => {
 // INICIO DEL SERVIDOR
 // =============================================================================
 
-// Verificar conexión a la base de datos
+// Verificar conexiÃ³n a la base de datos
 async function checkDatabaseConnection() {
     try {
         await database.query('SELECT NOW()');
-        logger.info('✅ Conexión a PostgreSQL verificada');
+        logger.info('âœ… ConexiÃ³n a PostgreSQL verificada');
         return true;
     } catch (error) {
-        logger.error('❌ Error conectando a PostgreSQL:', error.message);
+        logger.error('âŒ Error conectando a PostgreSQL:', error.message);
         return false;
     }
 }
@@ -303,14 +303,14 @@ async function startServer() {
         // Verificar base de datos
         const dbConnected = await checkDatabaseConnection();
         if (!dbConnected && environment.NODE_ENV === 'production') {
-            logger.error('💥 No se puede iniciar sin conexión a la base de datos');
+            logger.error('ðŸ’¥ No se puede iniciar sin conexiÃ³n a la base de datos');
             process.exit(1);
         }
 
         // Iniciar servidor HTTP
         server.listen(environment.PORT, '0.0.0.0', () => {
-            logger.info(`🚀 Servidor VSM iniciado en puerto ${environment.PORT}`);
-            logger.info(`🌍 Entorno: ${environment.NODE_ENV}`);
+            logger.info(`ðŸš€ Servidor VSM iniciado en puerto ${environment.PORT}`);
+            logger.info(`ðŸŒ Entorno: ${environment.NODE_ENV}`);
             
             // Mostrar IPs de acceso
             const interfaces = require('os').networkInterfaces();
@@ -324,63 +324,63 @@ async function startServer() {
             }
             
             if (addresses.length > 0) {
-                logger.info(`🔗 Acceso desde red local: http://${addresses[0]}:${environment.PORT}`);
+                logger.info(`ðŸ”— Acceso desde red local: http://${addresses[0]}:${environment.PORT}`);
             }
             
-            logger.info(`🔒 IPs permitidas: ${environment.SECURITY.ALLOWED_IPS.join(', ')}`);
+            logger.info(`ðŸ”’ IPs permitidas: ${environment.SECURITY.ALLOWED_IPS.join(', ')}`);
             
             if (environment.WEBSOCKET.ENABLED) {
-                logger.info(`⚡ WebSocket habilitado en ws://localhost:${environment.PORT}/ws`);
+                logger.info(`âš¡ WebSocket habilitado en ws://localhost:${environment.PORT}/ws`);
             }
         });
 
     } catch (error) {
-        logger.error('💥 Error iniciando servidor:', error);
+        logger.error('ðŸ’¥ Error iniciando servidor:', error);
         process.exit(1);
     }
 }
 
 // =============================================================================
-// WEBSOCKET GPEC5 Y INICIALIZACIÓN AUTOMÁTICA
+// WEBSOCKET GPEC5 Y INICIALIZACIÃ“N AUTOMÃTICA
 // =============================================================================
 
 // Crear servidor WebSocket adicional para GPEC5
 let wssGPEC5 = null;
 try {
     wssGPEC5 = new WebSocket.Server({ 
-        port: parseInt(process.env.WEBSOCKET_PORT_GPEC5) || 3003,
+        port: parseInt(process.env.WEBSOCKET_PORT_GPEC5) || 3002,
         path: '/gpec5-realtime'
     });
 
-    wssGPEC5.on('connection', (ws) => {
+    // wssGPEC5.on('connection', (ws) => {
         realDataController.handleWebSocketConnection(ws);
     });
 
-    logger.info(`🌐 WebSocket GPEC5 disponible en: ws://localhost:${parseInt(process.env.WEBSOCKET_PORT_GPEC5) || 3003}/gpec5-realtime`);
+    logger.info(`ðŸŒ WebSocket GPEC5 disponible en: ws://localhost:${parseInt(process.env.WEBSOCKET_PORT_GPEC5) || 3002}/gpec5-realtime`);
 } catch (error) {
-    logger.error('❌ Error iniciando WebSocket GPEC5:', error.message);
+    logger.error('âŒ Error iniciando WebSocket GPEC5:', error.message);
 }
 
-// Inicializar GPEC5 automáticamente después del arranque
+// Inicializar GPEC5 automÃ¡ticamente despuÃ©s del arranque
 setTimeout(async () => {
     try {
-        logger.info('🚀 Iniciando polling automático GPEC5...');
+        logger.info('ðŸš€ Iniciando polling automÃ¡tico GPEC5...');
         await realDataController.startPolling({ body: {} }, {
             json: (response) => {
                 if (response && response.success) {
-                    logger.info('✅ Polling GPEC5 iniciado automáticamente');
+                    logger.info('âœ… Polling GPEC5 iniciado automÃ¡ticamente');
                 } else {
-                    logger.error('❌ Error iniciando polling:', response?.error || 'Error desconocido');
+                    logger.error('âŒ Error iniciando polling:', response?.error || 'Error desconocido');
                 }
             }
         });
     } catch (error) {
-        logger.error('❌ Error en inicialización automática GPEC5:', error.message);
+        logger.error('âŒ Error en inicializaciÃ³n automÃ¡tica GPEC5:', error.message);
     }
-}, 5000); // Esperar 5 segundos después del inicio del servidor
+}, 5000); // Esperar 5 segundos despuÃ©s del inicio del servidor
 
 // Log de rutas GPEC5 configuradas
-logger.info('🔗 Rutas GPEC5 configuradas:');
+logger.info('ðŸ”— Rutas GPEC5 configuradas:');
 logger.info('   GET  /api/gpec5/configuration');
 logger.info('   GET  /api/gpec5/data/live');
 logger.info('   GET  /api/gpec5/process/:processName');
@@ -389,40 +389,40 @@ logger.info('   POST /api/gpec5/polling/stop');
 logger.info('   GET  /api/gpec5/stats');
 
 // =============================================================================
-// MANEJO DE SEÑALES DEL SISTEMA
+// MANEJO DE SEÃ‘ALES DEL SISTEMA
 // =============================================================================
 
-// Manejo de señales del sistema
+// Manejo de seÃ±ales del sistema
 process.on('SIGTERM', () => {
-    logger.info('🛑 SIGTERM recibido, cerrando servidor...');
+    logger.info('ðŸ›‘ SIGTERM recibido, cerrando servidor...');
     realDataController.cleanup();
     if (wssGPEC5) wssGPEC5.close();
     server.close(() => {
-        logger.info('✅ Servidor cerrado correctamente');
+        logger.info('âœ… Servidor cerrado correctamente');
         process.exit(0);
     });
 });
 
 process.on('SIGINT', () => {
-    logger.info('🛑 SIGINT recibido, cerrando servidor...');
+    logger.info('ðŸ›‘ SIGINT recibido, cerrando servidor...');
     realDataController.cleanup();
     if (wssGPEC5) wssGPEC5.close();
     server.close(() => {
-        logger.info('✅ Servidor cerrado correctamente');
+        logger.info('âœ… Servidor cerrado correctamente');
         process.exit(0);
     });
 });
 
 // Manejo de errores no capturados
 process.on('uncaughtException', (error) => {
-    logger.error('💥 Excepción no capturada:', error);
+    logger.error('ðŸ’¥ ExcepciÃ³n no capturada:', error);
     realDataController.cleanup();
     if (wssGPEC5) wssGPEC5.close();
     process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    logger.error('💥 Promise rechazada no manejada:', { reason, promise });
+    logger.error('ðŸ’¥ Promise rechazada no manejada:', { reason, promise });
     realDataController.cleanup();
     if (wssGPEC5) wssGPEC5.close();
     process.exit(1);
