@@ -4,370 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard VSM - Línea GPEC5 en Tiempo Real</title>
-    <style>
-        :root {
-            --primary-blue: #3498db;
-            --success-green: #27ae60;
-            --warning-orange: #f39c12;
-            --danger-red: #e74c3c;
-            --dark-bg: #2c3e50;
-            --light-bg: #ecf0f1;
-            --text-dark: #2c3e50;
-            --text-light: #7f8c8d;
-            --shadow: 0 4px 12px rgba(0,0,0,0.1);
-            --border-radius: 12px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: var(--text-dark);
-            min-height: 100vh;
-            overflow-x: auto;
-        }
-
-        .dashboard-container {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            background: white;
-            padding: 2rem;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-            text-align: center;
-            border-left: 5px solid var(--primary-blue);
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            color: var(--dark-bg);
-            margin-bottom: 0.5rem;
-        }
-
-        .header .subtitle {
-            color: var(--text-light);
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-        }
-
-        .status-bar {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--success-green);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .vsm-flow {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 2rem;
-            margin: 2rem 0;
-            overflow-x: auto;
-            padding: 1rem;
-            min-height: 400px;
-        }
-
-        .process-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            min-width: 320px;
-            max-width: 380px;
-            text-align: center;
-            border: 3px solid var(--primary-blue);
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .process-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-
-        .process-title {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: var(--dark-bg);
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .equipment-info {
-            font-size: 0.9rem;
-            color: var(--text-light);
-            margin-bottom: 1.5rem;
-            padding: 0.5rem;
-            background: var(--light-bg);
-            border-radius: 6px;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .metric-item {
-            text-align: center;
-            padding: 0.75rem;
-            background: var(--light-bg);
-            border-radius: 8px;
-            border-left: 4px solid var(--primary-blue);
-        }
-
-        .metric-value {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--dark-bg);
-            display: block;
-            margin-bottom: 0.25rem;
-        }
-
-        .metric-label {
-            font-size: 0.8rem;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .big-metrics {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .big-metric {
-            background: linear-gradient(135deg, var(--primary-blue), #2980b9);
-            color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .big-metric-value {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 0.25rem;
-        }
-
-        .big-metric-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .flow-arrow {
-            font-size: 3rem;
-            color: var(--primary-blue);
-            font-weight: bold;
-            animation: flowPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes flowPulse {
-            0%, 100% { transform: scale(1); opacity: 0.7; }
-            50% { transform: scale(1.1); opacity: 1; }
-        }
-
-        .summary-stats {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            margin: 2rem 0;
-        }
-
-        .summary-title {
-            font-size: 1.5rem;
-            color: var(--dark-bg);
-            margin-bottom: 1.5rem;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .summary-card {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            padding: 1.5rem;
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .summary-card:hover {
-            border-color: var(--primary-blue);
-            transform: translateY(-2px);
-        }
-
-        .summary-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: var(--primary-blue);
-            margin-bottom: 0.5rem;
-        }
-
-        .summary-label {
-            color: var(--text-dark);
-            font-weight: 600;
-        }
-
-        .summary-detail {
-            font-size: 0.8rem;
-            color: var(--text-light);
-            margin-top: 0.5rem;
-        }
-
-        .realtime-indicator {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 12px;
-            height: 12px;
-            background: var(--success-green);
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-
-        .outlier-indicator {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            margin-left: 0.5rem;
-        }
-
-        .outlier-normal {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .outlier-warning {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .outlier-danger {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .last-updated {
-            text-align: center;
-            font-size: 0.9rem;
-            color: var(--text-light);
-            margin-top: 2rem;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: var(--border-radius);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .vsm-flow {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .flow-arrow {
-                transform: rotate(90deg);
-                margin: 1rem 0;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .dashboard-container {
-                padding: 10px;
-            }
-            
-            .header {
-                padding: 1.5rem;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .process-card {
-                min-width: 280px;
-                padding: 1.5rem;
-            }
-            
-            .metrics-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .summary-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Animaciones para datos en tiempo real */
-        .updating {
-            animation: dataUpdate 0.5s ease-in-out;
-        }
-
-        @keyframes dataUpdate {
-            0% { background-color: rgba(52, 152, 219, 0.1); }
-            50% { background-color: rgba(52, 152, 219, 0.3); }
-            100% { background-color: transparent; }
-        }
-
-        .loading-skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-    </style>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="../shared/css/variables.css">
+    <link rel="stylesheet" href="css/vsm-dashboard.css">
+    <link rel="stylesheet" href="css/process-cards.css">
+    <link rel="stylesheet" href="css/metrics-display.css">
+    <link rel="stylesheet" href="css/realtime-indicators.css">
 </head>
 <body>
     <div class="dashboard-container">
@@ -398,15 +41,99 @@
 
         <!-- VSM Flow Principal -->
         <div class="vsm-flow">
-            <!-- Proceso HTFT -->
+            <!-- Wave Solder -->
             <div class="process-card">
                 <div class="realtime-indicator"></div>
-                <div class="process-title">
-                    📦 HTFT
-                </div>
+                <div class="process-title">🌊 WAVE SOLDER</div>
                 <div class="equipment-info">
-                    Equipos: HTFT_01, HTFT_02, HTFT_03<br>
+                    Equipos: WAVESOLDER_01<br>
+                    Configuración: Individual
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <span class="metric-value" id="wave-design">45s</span>
+                        <span class="metric-label">⚙️ Diseño</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-value" id="wave-real">47s</span>
+                        <span class="metric-label">⚡ T.Real</span>
+                        <span class="outlier-indicator outlier-normal">Normal</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-value" id="wave-hourly">48s</span>
+                        <span class="metric-label">📊 Prom.1h</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-value" id="wave-oee">94.2%</span>
+                        <span class="metric-label">📈 OEE</span>
+                    </div>
+                </div>
+
+                <div class="big-metrics">
+                    <div class="big-metric">
+                        <div class="big-metric-value" id="wave-pieces">892</div>
+                        <div class="big-metric-label">🔢 Piezas</div>
+                    </div>
+                    <div class="big-metric">
+                        <div class="big-metric-value" id="wave-efficiency">95.7%</div>
+                        <div class="big-metric-label">📊 Eficiencia</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-arrow">→</div>
+
+            <!-- Continuity -->
+            <div class="process-card">
+                <div class="realtime-indicator"></div>
+                <div class="process-title">🔌 CONTINUITY</div>
+                <div class="equipment-info">
+                    Equipos: CONT01, CONT02, CONT03<br>
                     Configuración: Paralelos | Agregación: Promedio Ponderado
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <span class="metric-value" id="cont-design">30s</span>
+                        <span class="metric-label">⚙️ Diseño</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-value" id="cont-real">32s</span>
+                        <span class="metric-label">⚡ T.Real</span>
+                        <span class="outlier-indicator outlier-normal">Normal</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-value" id="cont-hourly">31s</span>
+                        <span class="metric-label">📊 Prom.1h</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-value" id="cont-oee">96.8%</span>
+                        <span class="metric-label">📈 OEE</span>
+                    </div>
+                </div>
+
+                <div class="big-metrics">
+                    <div class="big-metric">
+                        <div class="big-metric-value" id="cont-pieces">1,145</div>
+                        <div class="big-metric-label">🔢 Piezas</div>
+                    </div>
+                    <div class="big-metric">
+                        <div class="big-metric-value" id="cont-efficiency">93.8%</div>
+                        <div class="big-metric-label">📊 Eficiencia</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-arrow">→</div>
+
+            <!-- Hot Test -->
+            <div class="process-card">
+                <div class="realtime-indicator"></div>
+                <div class="process-title">🔥 HOT TEST</div>
+                <div class="equipment-info">
+                    Equipos: HTFT_01 a HTFT_11 (10 equipos)<br>
+                    Configuración: Paralelos Masivos | Agregación: Promedio Ponderado
                 </div>
                 
                 <div class="metrics-grid">
@@ -417,7 +144,7 @@
                     <div class="metric-item">
                         <span class="metric-value" id="htft-real">63s</span>
                         <span class="metric-label">⚡ T.Real</span>
-                        <span class="outlier-indicator outlier-normal">Normal</span>
+                        <span class="outlier-indicator outlier-warning">±2σ</span>
                     </div>
                     <div class="metric-item">
                         <span class="metric-value" id="htft-hourly">65s</span>
@@ -431,101 +158,11 @@
 
                 <div class="big-metrics">
                     <div class="big-metric">
-                        <div class="big-metric-value" id="htft-pieces">1,089</div>
+                        <div class="big-metric-value" id="htft-pieces">2,347</div>
                         <div class="big-metric-label">🔢 Piezas</div>
                     </div>
                     <div class="big-metric">
                         <div class="big-metric-value" id="htft-efficiency">95.2%</div>
-                        <div class="big-metric-label">📊 Eficiencia</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flow-arrow">→</div>
-
-            <!-- Proceso Adicional (Ejemplo) -->
-            <div class="process-card">
-                <div class="realtime-indicator"></div>
-                <div class="process-title">
-                    🔧 ASSEMBLY
-                </div>
-                <div class="equipment-info">
-                    Equipos: ASM_01, ASM_02<br>
-                    Configuración: Paralelos | Agregación: Máximo (Cuello Botella)
-                </div>
-                
-                <div class="metrics-grid">
-                    <div class="metric-item">
-                        <span class="metric-value" id="asm-design">45s</span>
-                        <span class="metric-label">⚙️ Diseño</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="asm-real">47s</span>
-                        <span class="metric-label">⚡ T.Real</span>
-                        <span class="outlier-indicator outlier-warning">±2σ</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="asm-hourly">48s</span>
-                        <span class="metric-label">📊 Prom.1h</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="asm-oee">93.8%</span>
-                        <span class="metric-label">📈 OEE</span>
-                    </div>
-                </div>
-
-                <div class="big-metrics">
-                    <div class="big-metric">
-                        <div class="big-metric-value" id="asm-pieces">1,247</div>
-                        <div class="big-metric-label">🔢 Piezas</div>
-                    </div>
-                    <div class="big-metric">
-                        <div class="big-metric-value" id="asm-efficiency">95.7%</div>
-                        <div class="big-metric-label">📊 Eficiencia</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flow-arrow">→</div>
-
-            <!-- Proceso Final -->
-            <div class="process-card">
-                <div class="realtime-indicator"></div>
-                <div class="process-title">
-                    ✅ QUALITY
-                </div>
-                <div class="equipment-info">
-                    Equipos: QC_01<br>
-                    Configuración: Individual | Validación: Estricta
-                </div>
-                
-                <div class="metrics-grid">
-                    <div class="metric-item">
-                        <span class="metric-value" id="qc-design">30s</span>
-                        <span class="metric-label">⚙️ Diseño</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="qc-real">32s</span>
-                        <span class="metric-label">⚡ T.Real</span>
-                        <span class="outlier-indicator outlier-normal">Normal</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="qc-hourly">31s</span>
-                        <span class="metric-label">📊 Prom.1h</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="qc-oee">96.7%</span>
-                        <span class="metric-label">📈 OEE</span>
-                    </div>
-                </div>
-
-                <div class="big-metrics">
-                    <div class="big-metric">
-                        <div class="big-metric-value" id="qc-pieces">1,201</div>
-                        <div class="big-metric-label">🔢 Piezas</div>
-                    </div>
-                    <div class="big-metric">
-                        <div class="big-metric-value" id="qc-efficiency">97.1%</div>
                         <div class="big-metric-label">📊 Eficiencia</div>
                     </div>
                 </div>
@@ -540,37 +177,37 @@
             
             <div class="summary-grid">
                 <div class="summary-card">
-                    <div class="summary-value" id="total-pieces">3,537</div>
+                    <div class="summary-value" id="total-pieces">4,384</div>
                     <div class="summary-label">Total Piezas Procesadas</div>
                     <div class="summary-detail">Últimas 8 horas | +2.3% vs ayer</div>
                 </div>
                 
                 <div class="summary-card">
-                    <div class="summary-value" id="total-cycle-time">142s</div>
+                    <div class="summary-value" id="total-cycle-time">140s</div>
                     <div class="summary-label">Tiempo Total Línea</div>
                     <div class="summary-detail">Suma secuencial | Target: 135s</div>
                 </div>
                 
                 <div class="summary-card">
-                    <div class="summary-value" id="line-efficiency">94.1%</div>
+                    <div class="summary-value" id="line-efficiency">94.9%</div>
                     <div class="summary-label">Eficiencia de Línea</div>
                     <div class="summary-detail">Promedio ponderado | Target: 95%</div>
                 </div>
                 
                 <div class="summary-card">
-                    <div class="summary-value" id="outliers-detected">2.1%</div>
+                    <div class="summary-value" id="outliers-detected">3.2%</div>
                     <div class="summary-label">Outliers Detectados</div>
                     <div class="summary-detail">±2σ | Umbral: 5% | Status: Normal</div>
                 </div>
                 
                 <div class="summary-card">
-                    <div class="summary-value" id="throughput">25.4</div>
+                    <div class="summary-value" id="throughput">25.7</div>
                     <div class="summary-label">Throughput (pzs/h)</div>
                     <div class="summary-detail">Capacidad actual | Target: 26.7</div>
                 </div>
                 
                 <div class="summary-card">
-                    <div class="summary-value" id="uptime">98.7%</div>
+                    <div class="summary-value" id="uptime">98.1%</div>
                     <div class="summary-label">Uptime de Línea</div>
                     <div class="summary-detail">Últimas 24h | Excelente</div>
                 </div>
@@ -581,574 +218,15 @@
         <div class="last-updated">
             🕒 Última actualización: <span id="last-update-time">07/21/2025 07:08:27</span> | 
             📡 Polling cada 30 segundos | 
-            🎯 Procesando datos de: \\server\data\gpec5_*.csv |
+            🎯 Procesando datos de: mxryfis4.global.borgwarner.net |
             ⚡ Sistema VSM v1.0 - Detección ±2σ Activa
         </div>
     </div>
 
-    <script>
-        // Simulación de datos en tiempo real basados en tu formato CSV
-        class VSMDataProcessor {
-            constructor() {
-                this.lastUpdate = new Date();
-                this.csvData = [];
-                this.processes = {
-                    'HTFT': { equipments: ['HTFT_01', 'HTFT_02', 'HTFT_03'], designTime: 60 },
-                    'ASSEMBLY': { equipments: ['ASM_01', 'ASM_02'], designTime: 45 },
-                    'QUALITY': { equipments: ['QC_01'], designTime: 30 }
-                };
-            }
-
-            // Simular procesamiento de CSV como el tuyo
-            simulateCSVData() {
-                const processes = Object.keys(this.processes);
-                const currentTime = new Date();
-                
-                processes.forEach(processName => {
-                    const process = this.processes[processName];
-                    
-                    process.equipments.forEach(equipmentId => {
-                        // Simular datos como tu ejemplo:
-                        // 64125090026109,GPEC5,66829616,HTFT,HTFT_01,BREQ,07/21/2025 07:07:04
-                        // 64125090026109,GPEC5,66829616,HTFT,HTFT_01,BCMP OK,07/21/2025 07:08:27
-                        
-                        const serial = this.generateSerial();
-                        const partNumber = Math.floor(Math.random() * 99999999) + 10000000;
-                        
-                        const breqTime = new Date(currentTime.getTime() - Math.random() * 120000); // Últimos 2 min
-                        const cycleTime = process.designTime + (Math.random() - 0.5) * 20; // ±10s variación
-                        const bcmpTime = new Date(breqTime.getTime() + cycleTime * 1000);
-                        
-                        this.csvData.push({
-                            serial: serial,
-                            line: 'GPEC5',
-                            partNumber: partNumber,
-                            process: processName,
-                            equipment: equipmentId,
-                            breqTime: breqTime,
-                            bcmpTime: bcmpTime,
-                            cycleTime: cycleTime,
-                            status: Math.random() > 0.05 ? 'BCMP OK' : 'BCMP NG' // 95% OK rate
-                        });
-                    });
-                });
-
-                // Mantener solo últimos 1000 registros
-                if (this.csvData.length > 1000) {
-                    this.csvData = this.csvData.slice(-1000);
-                }
-            }
-
-            generateSerial() {
-                return Math.floor(Math.random() * 900000000000000) + 100000000000000;
-            }
-
-            // Calcular métricas según tu visión VSM
-            calculateProcessMetrics(processName) {
-                const processData = this.csvData.filter(d => d.process === processName && d.status === 'BCMP OK');
-                
-                if (processData.length === 0) {
-                    return {
-                        realTime: this.processes[processName].designTime,
-                        hourlyAvg: this.processes[processName].designTime,
-                        oee: 95.0,
-                        pieces: 0,
-                        efficiency: 95.0,
-                        outlierStatus: 'normal'
-                    };
-                }
-
-                // Tiempo real: último par válido promediado (tu especificación)
-                const recentData = processData.slice(-10); // Últimos 10 registros
-                const realTime = recentData.reduce((sum, d) => sum + d.cycleTime, 0) / recentData.length;
-
-                // Promedio 1h con filtro ±2σ
-                const hourlyData = processData.slice(-60); // Simular 1 hora de datos
-                const hourlyAvg = this.removeOutliersAndAverage(hourlyData.map(d => d.cycleTime), 2.0);
-
-                // OEE: promedio ponderado de equipos
-                const oee = Math.max(85, 100 - (Math.abs(realTime - this.processes[processName].designTime) / this.processes[processName].designTime) * 100);
-
-                // Piezas: suma BCMP exitosos
-                const pieces = processData.filter(d => 
-                    d.bcmpTime >= new Date(Date.now() - 8 * 60 * 60 * 1000) // Últimas 8 horas
-                ).length;
-
-                // Eficiencia vs diseño
-                const efficiency = (this.processes[processName].designTime / realTime) * 100;
-
-                // Estado outliers
-                const outlierStatus = this.detectOutlierStatus(realTime, this.processes[processName].designTime);
-
-                return {
-                    realTime: Math.round(realTime),
-                    hourlyAvg: Math.round(hourlyAvg),
-                    oee: oee.toFixed(1),
-                    pieces: pieces,
-                    efficiency: efficiency.toFixed(1),
-                    outlierStatus: outlierStatus
-                };
-            }
-
-            removeOutliersAndAverage(data, stdMultiplier = 2.0) {
-                if (data.length < 3) return data.reduce((sum, val) => sum + val, 0) / data.length;
-
-                const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
-                const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length;
-                const stdDev = Math.sqrt(variance);
-
-                const filtered = data.filter(val => 
-                    Math.abs(val - mean) <= stdMultiplier * stdDev
-                );
-
-                return filtered.length > 0 ? 
-                    filtered.reduce((sum, val) => sum + val, 0) / filtered.length : mean;
-            }
-
-            detectOutlierStatus(realTime, designTime) {
-                const deviation = Math.abs(realTime - designTime) / designTime;
-                
-                if (deviation <= 0.05) return 'normal';
-                if (deviation <= 0.15) return 'warning';
-                return 'danger';
-            }
-        }
-
-        // Inicializar sistema
-        const vsmProcessor = new VSMDataProcessor();
-        let updateInterval;
-
-        function updateDashboard() {
-            vsmProcessor.simulateCSVData();
-
-            // Actualizar cada proceso
-            Object.keys(vsmProcessor.processes).forEach(processName => {
-                const metrics = vsmProcessor.calculateProcessMetrics(processName);
-                const prefix = processName.toLowerCase().substring(0, 4);
-
-                // Actualizar métricas con animación
-                updateMetricWithAnimation(`${prefix}-real`, `${metrics.realTime}s`);
-                updateMetricWithAnimation(`${prefix}-hourly`, `${metrics.hourlyAvg}s`);
-                updateMetricWithAnimation(`${prefix}-oee`, `${metrics.oee}%`);
-                updateMetricWithAnimation(`${prefix}-pieces`, metrics.pieces.toLocaleString());
-                updateMetricWithAnimation(`${prefix}-efficiency`, `${metrics.efficiency}%`);
-
-                // Actualizar indicador de outliers
-                const realTimeElement = document.getElementById(`${prefix}-real`);
-                if (realTimeElement && realTimeElement.nextElementSibling) {
-                    const outlierIndicator = realTimeElement.nextElementSibling;
-                    outlierIndicator.className = `outlier-indicator outlier-${metrics.outlierStatus}`;
-                    outlierIndicator.textContent = metrics.outlierStatus === 'normal' ? 'Normal' : 
-                                                 metrics.outlierStatus === 'warning' ? '±2σ' : 'Outlier';
-                }
-            });
-
-            // Actualizar resumen general
-            updateSummaryMetrics();
-
-            // Actualizar timestamp
-            document.getElementById('last-update-time').textContent = 
-                new Date().toLocaleString('es-ES', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                });
-        }
-
-        function updateMetricWithAnimation(elementId, value) {
-            const element = document.getElementById(elementId);
-            if (element && element.textContent !== value) {
-                element.classList.add('updating');
-                element.textContent = value;
-                
-                setTimeout(() => {
-                    element.classList.remove('updating');
-                }, 500);
-            }
-        }
-
-        function updateSummaryMetrics() {
-            const htftMetrics = vsmProcessor.calculateProcessMetrics('HTFT');
-            const asmMetrics = vsmProcessor.calculateProcessMetrics('ASSEMBLY');
-            const qcMetrics = vsmProcessor.calculateProcessMetrics('QUALITY');
-
-            // Total piezas
-            const totalPieces = htftMetrics.pieces + asmMetrics.pieces + qcMetrics.pieces;
-            updateMetricWithAnimation('total-pieces', totalPieces.toLocaleString());
-
-            // Tiempo total línea (secuencial)
-            const totalCycleTime = htftMetrics.realTime + asmMetrics.realTime + qcMetrics.realTime;
-            updateMetricWithAnimation('total-cycle-time', `${totalCycleTime}s`);
-
-            // Eficiencia de línea (promedio ponderado)
-            const lineEfficiency = (
-                (parseFloat(htftMetrics.efficiency) + 
-                 parseFloat(asmMetrics.efficiency) + 
-                 parseFloat(qcMetrics.efficiency)) / 3
-            ).toFixed(1);
-            updateMetricWithAnimation('line-efficiency', `${lineEfficiency}%`);
-
-            // Outliers detectados (simulado)
-            const outlierPercentage = (Math.random() * 5).toFixed(1);
-            updateMetricWithAnimation('outliers-detected', `${outlierPercentage}%`);
-
-            // Throughput (piezas por hora)
-            const hourlyThroughput = Math.round(3600 / totalCycleTime * 10) / 10;
-            updateMetricWithAnimation('throughput', hourlyThroughput.toString());
-
-            // Uptime (simulado alta disponibilidad)
-            const uptime = (98 + Math.random() * 2).toFixed(1);
-            updateMetricWithAnimation('uptime', `${uptime}%`);
-        }
-
-        // Sistema de procesamiento CSV en tiempo real
-        class CSVProcessor {
-            constructor() {
-                this.csvPaths = [
-                    '\\\\server\\data\\gpec5_htft_01.csv',
-                    '\\\\server\\data\\gpec5_htft_02.csv',
-                    '\\\\server\\data\\gpec5_htft_03.csv',
-                    '\\\\server\\data\\gpec5_asm_01.csv',
-                    '\\\\server\\data\\gpec5_asm_02.csv',
-                    '\\\\server\\data\\gpec5_qc_01.csv'
-                ];
-                this.pollingInterval = 30000; // 30 segundos
-                this.isProcessing = false;
-            }
-
-            // Simular lectura de CSV con tu formato exacto
-            async processCSVFile(csvPath) {
-                // En producción, esto leería el archivo real
-                // return await fetch('/api/csv/read', { 
-                //     method: 'POST',
-                //     body: JSON.stringify({ csvPath }),
-                //     headers: { 'Content-Type': 'application/json' }
-                // });
-
-                // Simular procesamiento por ahora
-                return this.simulateCSVRead(csvPath);
-            }
-
-            simulateCSVRead(csvPath) {
-                // Simular datos basados en tu formato:
-                // 64125090026109,GPEC5,66829616,HTFT,HTFT_01,BREQ,07/21/2025 07:07:04
-                // 64125090026109,GPEC5,66829616,HTFT,HTFT_01,BCMP OK,07/21/2025 07:08:27
-
-                const equipment = csvPath.split('_').pop().replace('.csv', '').toUpperCase();
-                const process = csvPath.includes('htft') ? 'HTFT' : 
-                              csvPath.includes('asm') ? 'ASSEMBLY' : 'QUALITY';
-
-                const records = [];
-                const currentTime = new Date();
-
-                // Generar últimos 10 registros para simular datos recientes
-                for (let i = 0; i < 10; i++) {
-                    const serial = Math.floor(Math.random() * 900000000000000) + 100000000000000;
-                    const partNumber = Math.floor(Math.random() * 99999999) + 10000000;
-                    const timestamp = new Date(currentTime.getTime() - i * 60000); // Cada minuto hacia atrás
-
-                    const breqRecord = {
-                        serial: serial.toString(),
-                        line: 'GPEC5',
-                        partNumber: partNumber.toString(),
-                        process: process,
-                        equipment: equipment,
-                        status: 'BREQ',
-                        timestamp: this.formatTimestamp(timestamp)
-                    };
-
-                    const cycleTime = vsmProcessor.processes[process].designTime + (Math.random() - 0.5) * 20;
-                    const bcmpTimestamp = new Date(timestamp.getTime() + cycleTime * 1000);
-
-                    const bcmpRecord = {
-                        serial: serial.toString(),
-                        line: 'GPEC5',
-                        partNumber: partNumber.toString(),
-                        process: process,
-                        equipment: equipment,
-                        status: Math.random() > 0.05 ? 'BCMP OK' : 'BCMP NG',
-                        timestamp: this.formatTimestamp(bcmpTimestamp)
-                    };
-
-                    records.push(breqRecord, bcmpRecord);
-                }
-
-                return records;
-            }
-
-            formatTimestamp(date) {
-                // Formato como el tuyo: 07/21/2025 07:08:27
-                return date.toLocaleString('en-US', {
-                    month: '2-digit',
-                    day: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                });
-            }
-
-            // Calcular tiempo de ciclo desde pares BREQ/BCMP
-            calculateCycleTime(breqRecord, bcmpRecord) {
-                if (breqRecord.serial !== bcmpRecord.serial) return null;
-                
-                const breqTime = new Date(breqRecord.timestamp);
-                const bcmpTime = new Date(bcmpRecord.timestamp);
-                
-                return (bcmpTime - breqTime) / 1000; // Segundos
-            }
-
-            // Detectar outliers con método ±2σ (tu especificación)
-            detectOutliers(cycleTimes, stdMultiplier = 2.0) {
-                if (cycleTimes.length < 3) return { outliers: [], normal: cycleTimes };
-
-                const mean = cycleTimes.reduce((sum, time) => sum + time, 0) / cycleTimes.length;
-                const variance = cycleTimes.reduce((sum, time) => sum + Math.pow(time - mean, 2), 0) / cycleTimes.length;
-                const stdDev = Math.sqrt(variance);
-
-                const outliers = [];
-                const normal = [];
-
-                cycleTimes.forEach(time => {
-                    if (Math.abs(time - mean) > stdMultiplier * stdDev) {
-                        outliers.push({
-                            value: time,
-                            deviation: Math.abs(time - mean),
-                            sigmaLevel: Math.abs(time - mean) / stdDev
-                        });
-                    } else {
-                        normal.push(time);
-                    }
-                });
-
-                return { 
-                    outliers, 
-                    normal, 
-                    mean, 
-                    stdDev,
-                    outlierPercentage: (outliers.length / cycleTimes.length) * 100
-                };
-            }
-
-            async startRealTimeProcessing() {
-                this.isProcessing = true;
-                console.log('🔄 Iniciando procesamiento CSV en tiempo real...');
-
-                const processData = async () => {
-                    if (!this.isProcessing) return;
-
-                    try {
-                        console.log('📊 Procesando archivos CSV...');
-                        
-                        // Procesar cada archivo CSV
-                        for (const csvPath of this.csvPaths) {
-                            const records = await this.processCSVFile(csvPath);
-                            this.analyzeRecords(records);
-                        }
-
-                        // Actualizar dashboard
-                        updateDashboard();
-
-                    } catch (error) {
-                        console.error('❌ Error procesando CSV:', error);
-                    }
-
-                    // Programar siguiente actualización
-                    setTimeout(processData, this.pollingInterval);
-                };
-
-                // Iniciar procesamiento
-                processData();
-            }
-
-            analyzeRecords(records) {
-                // Agrupar BREQ/BCMP por serial para calcular tiempos de ciclo
-                const pairMap = new Map();
-                
-                records.forEach(record => {
-                    const key = `${record.serial}_${record.equipment}`;
-                    
-                    if (!pairMap.has(key)) {
-                        pairMap.set(key, { breq: null, bcmp: null });
-                    }
-                    
-                    const pair = pairMap.get(key);
-                    
-                    if (record.status === 'BREQ') {
-                        pair.breq = record;
-                    } else if (record.status.startsWith('BCMP')) {
-                        pair.bcmp = record;
-                    }
-                });
-
-                // Calcular tiempos de ciclo de pares completos
-                const cycleTimes = [];
-                pairMap.forEach(pair => {
-                    if (pair.breq && pair.bcmp) {
-                        const cycleTime = this.calculateCycleTime(pair.breq, pair.bcmp);
-                        if (cycleTime && cycleTime > 0 && cycleTime < 7200) { // Validar rango razonable
-                            cycleTimes.push(cycleTime);
-                        }
-                    }
-                });
-
-                // Análisis de outliers
-                if (cycleTimes.length > 0) {
-                    const analysis = this.detectOutliers(cycleTimes);
-                    console.log(`📈 Análisis completado: ${cycleTimes.length} ciclos, ${analysis.outliers.length} outliers (${analysis.outlierPercentage.toFixed(1)}%)`);
-                }
-            }
-
-            stopProcessing() {
-                this.isProcessing = false;
-                console.log('⏹️ Procesamiento CSV detenido');
-            }
-        }
-
-        // WebSocket simulado para notificaciones en tiempo real
-        class VSMWebSocket {
-            constructor() {
-                this.isConnected = false;
-                this.reconnectAttempts = 0;
-                this.maxReconnectAttempts = 5;
-            }
-
-            connect() {
-                // En producción, esto sería una conexión WebSocket real
-                // this.socket = new WebSocket('ws://localhost:3001/vsm');
-                
-                // Simular conexión exitosa
-                setTimeout(() => {
-                    this.isConnected = true;
-                    this.updateConnectionStatus('Conectado');
-                    console.log('🔗 WebSocket VSM conectado');
-                }, 1000);
-
-                // Simular mensajes periódicos
-                this.simulateMessages();
-            }
-
-            simulateMessages() {
-                setInterval(() => {
-                    if (this.isConnected) {
-                        this.handleMessage({
-                            type: 'metrics_update',
-                            timestamp: new Date().toISOString(),
-                            data: 'Métricas actualizadas'
-                        });
-                    }
-                }, 30000); // Cada 30 segundos
-            }
-
-            handleMessage(message) {
-                switch (message.type) {
-                    case 'metrics_update':
-                        console.log('📊 Métricas actualizadas via WebSocket');
-                        break;
-                    case 'outlier_detected':
-                        this.showOutlierAlert(message.data);
-                        break;
-                    case 'line_status_change':
-                        this.updateLineStatus(message.data);
-                        break;
-                }
-            }
-
-            showOutlierAlert(data) {
-                const alert = document.createElement('div');
-                alert.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: #e74c3c;
-                    color: white;
-                    padding: 1rem;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                    z-index: 1000;
-                    animation: slideIn 0.3s ease-out;
-                `;
-                alert.innerHTML = `
-                    <strong>⚠️ Outlier Detectado</strong><br>
-                    ${data.process} - ${data.equipment}<br>
-                    Tiempo: ${data.cycleTime}s (±${data.sigmaLevel.toFixed(1)}σ)
-                `;
-                
-                document.body.appendChild(alert);
-                
-                setTimeout(() => {
-                    alert.remove();
-                }, 5000);
-            }
-
-            updateConnectionStatus(status) {
-                const statusElement = document.getElementById('connection-status');
-                if (statusElement) {
-                    statusElement.textContent = status;
-                }
-            }
-        }
-
-        // Inicialización del sistema
-        let csvProcessor;
-        let vsmWebSocket;
-
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🗺️ Dashboard VSM iniciado - Procesando datos formato CSV');
-            console.log('📋 Formato detectado: Serial,Línea,Parte,Proceso,Equipo,Estado,Timestamp');
-            
-            // Inicializar procesador CSV
-            csvProcessor = new CSVProcessor();
-            csvProcessor.startRealTimeProcessing();
-
-            // Inicializar WebSocket
-            vsmWebSocket = new VSMWebSocket();
-            vsmWebSocket.connect();
-
-            // Primera actualización inmediata
-            updateDashboard();
-
-            // Configurar actualización periódica
-            updateInterval = setInterval(updateDashboard, 30000); // Cada 30 segundos
-
-            console.log('✅ Sistema VSM listo - Monitoreando línea GPEC5');
-            console.log('🔄 Polling CSV cada 30 segundos');
-            console.log('📊 Detección outliers ±2σ activa');
-        });
-
-        // Funciones de control para debugging
-        window.vsmDebug = {
-            processor: vsmProcessor,
-            csvProcessor: csvProcessor,
-            webSocket: vsmWebSocket,
-            forceUpdate: updateDashboard,
-            stopProcessing: () => {
-                clearInterval(updateInterval);
-                csvProcessor.stopProcessing();
-            },
-            startProcessing: () => {
-                updateInterval = setInterval(updateDashboard, 30000);
-                csvProcessor.startRealTimeProcessing();
-            }
-        };
-
-        // Manejo de errores global
-        window.addEventListener('error', function(event) {
-            console.error('🚨 Error en Dashboard VSM:', event.error);
-        });
-
-        // Cleanup al cerrar
-        window.addEventListener('beforeunload', function() {
-            if (csvProcessor) csvProcessor.stopProcessing();
-            if (updateInterval) clearInterval(updateInterval);
-        });
-
-        console.log('🎯 Dashboard VSM cargado completamente');
-        console.log('💡 Debug: window.vsmDebug contiene controles del sistema');
-    </script>
+    <!-- JavaScript Files -->
+    <script src="../shared/js/utils.js"></script>
+    <script src="js/realtime-metrics.js"></script>
+    <script src="js/gpec5-data-processor.js"></script>
+    <script src="js/vsm-dashboard-main.js"></script>
 </body>
 </html>

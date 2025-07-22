@@ -1,5 +1,5 @@
 // =============================================================================
-// server.js - Servidor principal VSM (Value Stream Map) - CON INTEGRACIÓN GPEC5
+// server.js - Servidor principal VSM (Value Stream Map)
 // =============================================================================
 
 const express = require('express');
@@ -17,15 +17,9 @@ const logger = require('./config/logger');
 const { ipFilterMiddleware, corsOptions } = require('./config/security');
 const database = require('./config/database');
 
-// ===== INTEGRACIÓN GPEC5 =====
-const RealDataController = require('./src/presentation/controllers/public/RealDataController');
-
 // Crear aplicación Express
 const app = express();
 const server = http.createServer(app);
-
-// Inicializar controlador de datos reales GPEC5
-const realDataController = new RealDataController();
 
 // =============================================================================
 // MIDDLEWARE DE SEGURIDAD Y CONFIGURACIÓN
@@ -151,11 +145,7 @@ app.get('/health', (req, res) => {
         environment: environment.NODE_ENV,
         uptime: process.uptime(),
         memory: process.memoryUsage(),
-        websocket: environment.WEBSOCKET.ENABLED ? 'enabled' : 'disabled',
-        gpec5: {
-            polling: realDataController.isPolling || false,
-            connectedClients: realDataController.connectedClients?.size || 0
-        }
+        websocket: environment.WEBSOCKET.ENABLED ? 'enabled' : 'disabled'
     });
 });
 
@@ -168,12 +158,7 @@ app.get('/api/status', (req, res) => {
         nodejs: process.version,
         environment: environment.NODE_ENV,
         database: 'connected', // TODO: verificar conexión real
-        clients: wss ? wss.clients.size : 0,
-        gpec5: {
-            active: true,
-            polling: realDataController.isPolling || false,
-            clients: realDataController.connectedClients?.size || 0
-        }
+        clients: wss ? wss.clients.size : 0
     });
 });
 
@@ -201,33 +186,10 @@ app.get('/vsm/:lineCode', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard', 'value-stream-map.html'));
 });
 
-// Dashboard VSM GPEC5
-app.get('/gpec5', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'dashboard', 'value-stream-map.html'));
-});
-
 // =============================================================================
 // RUTAS DE LA API REST
 // =============================================================================
 
-// ===== RUTAS API GPEC5 - DATOS REALES =====
-// Configuración de equipos y procesos GPEC5
-app.get('/api/gpec5/configuration', realDataController.getConfiguration.bind(realDataController));
-
-// Datos en tiempo real de toda la línea GPEC5
-app.get('/api/gpec5/data/live', realDataController.getLiveData.bind(realDataController));
-
-// Datos de proceso específico
-app.get('/api/gpec5/process/:processName', realDataController.getProcessData.bind(realDataController));
-
-// Control de polling
-app.post('/api/gpec5/polling/start', realDataController.startPolling.bind(realDataController));
-app.post('/api/gpec5/polling/stop', realDataController.stopPolling.bind(realDataController));
-
-// Estadísticas del sistema
-app.get('/api/gpec5/stats', realDataController.getSystemStats.bind(realDataController));
-
-// ===== RUTAS API GENERALES (EXISTENTES) =====
 // TODO: Implementar controladores de la API
 // app.use('/api/admin', require('./src/presentation/routes/admin'));
 // app.use('/api/public', require('./src/presentation/routes/public'));
@@ -340,63 +302,9 @@ async function startServer() {
     }
 }
 
-// =============================================================================
-// WEBSOCKET GPEC5 Y INICIALIZACIÓN AUTOMÁTICA
-// =============================================================================
-
-// Crear servidor WebSocket adicional para GPEC5
-let wssGPEC5 = null;
-try {
-    wssGPEC5 = new WebSocket.Server({ 
-        port: parseInt(process.env.WEBSOCKET_PORT_GPEC5) || 3002,
-        path: '/gpec5-realtime'
-    });
-
-    wssGPEC5.on('connection', (ws) => {
-        realDataController.handleWebSocketConnection(ws);
-    });
-
-    logger.info(`🌐 WebSocket GPEC5 disponible en: ws://localhost:${parseInt(process.env.WEBSOCKET_PORT_GPEC5) || 3002}/gpec5-realtime`);
-} catch (error) {
-    logger.error('❌ Error iniciando WebSocket GPEC5:', error.message);
-}
-
-// Inicializar GPEC5 automáticamente después del arranque
-setTimeout(async () => {
-    try {
-        logger.info('🚀 Iniciando polling automático GPEC5...');
-        await realDataController.startPolling({ body: {} }, {
-            json: (response) => {
-                if (response && response.success) {
-                    logger.info('✅ Polling GPEC5 iniciado automáticamente');
-                } else {
-                    logger.error('❌ Error iniciando polling:', response?.error || 'Error desconocido');
-                }
-            }
-        });
-    } catch (error) {
-        logger.error('❌ Error en inicialización automática GPEC5:', error.message);
-    }
-}, 5000); // Esperar 5 segundos después del inicio del servidor
-
-// Log de rutas GPEC5 configuradas
-logger.info('🔗 Rutas GPEC5 configuradas:');
-logger.info('   GET  /api/gpec5/configuration');
-logger.info('   GET  /api/gpec5/data/live');
-logger.info('   GET  /api/gpec5/process/:processName');
-logger.info('   POST /api/gpec5/polling/start');
-logger.info('   POST /api/gpec5/polling/stop');
-logger.info('   GET  /api/gpec5/stats');
-
-// =============================================================================
-// MANEJO DE SEÑALES DEL SISTEMA
-// =============================================================================
-
 // Manejo de señales del sistema
 process.on('SIGTERM', () => {
     logger.info('🛑 SIGTERM recibido, cerrando servidor...');
-    realDataController.cleanup();
-    if (wssGPEC5) wssGPEC5.close();
     server.close(() => {
         logger.info('✅ Servidor cerrado correctamente');
         process.exit(0);
@@ -405,8 +313,6 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
     logger.info('🛑 SIGINT recibido, cerrando servidor...');
-    realDataController.cleanup();
-    if (wssGPEC5) wssGPEC5.close();
     server.close(() => {
         logger.info('✅ Servidor cerrado correctamente');
         process.exit(0);
@@ -416,19 +322,98 @@ process.on('SIGINT', () => {
 // Manejo de errores no capturados
 process.on('uncaughtException', (error) => {
     logger.error('💥 Excepción no capturada:', error);
-    realDataController.cleanup();
-    if (wssGPEC5) wssGPEC5.close();
     process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
     logger.error('💥 Promise rechazada no manejada:', { reason, promise });
-    realDataController.cleanup();
-    if (wssGPEC5) wssGPEC5.close();
     process.exit(1);
 });
 
 // Iniciar el servidor
 startServer();
 
-module.exports = { app, server, wss, realDataController, wssGPEC5 };
+module.exports = { app, server, wss };
+
+// Agregar al server.js existente - Nuevas rutas para datos reales GPEC5
+
+const RealDataController = require('./src/presentation/controllers/public/RealDataController');
+const WebSocket = require('ws');
+
+// Inicializar controlador de datos reales
+const realDataController = new RealDataController();
+
+// ===== RUTAS API PARA DATOS REALES GPEC5 =====
+
+// Configuración de equipos y procesos GPEC5
+app.get('/api/gpec5/configuration', realDataController.getConfiguration.bind(realDataController));
+
+// Datos en tiempo real de toda la línea GPEC5
+app.get('/api/gpec5/data/live', realDataController.getLiveData.bind(realDataController));
+
+// Datos de proceso específico
+app.get('/api/gpec5/process/:processName', realDataController.getProcessData.bind(realDataController));
+
+// Control de polling
+app.post('/api/gpec5/polling/start', realDataController.startPolling.bind(realDataController));
+app.post('/api/gpec5/polling/stop', realDataController.stopPolling.bind(realDataController));
+
+// Estadísticas del sistema
+app.get('/api/gpec5/stats', realDataController.getSystemStats.bind(realDataController));
+
+// ===== WEBSOCKET PARA TIEMPO REAL =====
+
+// Crear servidor WebSocket
+const wss = new WebSocket.Server({ 
+    port: parseInt(process.env.WEBSOCKET_PORT) || 3002,
+    path: '/gpec5-realtime'
+});
+
+wss.on('connection', (ws) => {
+    realDataController.handleWebSocketConnection(ws);
+});
+
+// ===== INICIALIZACIÓN AUTOMÁTICA =====
+
+// Iniciar polling automáticamente al arrancar el servidor
+setTimeout(async () => {
+    try {
+        console.log('🚀 Iniciando polling automático GPEC5...');
+        await realDataController.startPolling({ body: {} }, {
+            json: (response) => {
+                if (response.success) {
+                    console.log('✅ Polling GPEC5 iniciado automáticamente');
+                } else {
+                    console.error('❌ Error iniciando polling:', response.error);
+                }
+            }
+        });
+    } catch (error) {
+        console.error('❌ Error en inicialización automática:', error.message);
+    }
+}, 5000); // Esperar 5 segundos después del inicio del servidor
+
+// ===== CLEANUP AL CERRAR =====
+
+process.on('SIGINT', () => {
+    console.log('🛑 Cerrando servidor...');
+    realDataController.cleanup();
+    wss.close();
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('🛑 Terminando servidor...');
+    realDataController.cleanup();
+    wss.close();
+    process.exit(0);
+});
+
+console.log('🔗 Rutas GPEC5 configuradas:');
+console.log('   GET  /api/gpec5/configuration');
+console.log('   GET  /api/gpec5/data/live');
+console.log('   GET  /api/gpec5/process/:processName');
+console.log('   POST /api/gpec5/polling/start');
+console.log('   POST /api/gpec5/polling/stop');
+console.log('   GET  /api/gpec5/stats');
+console.log(`🌐 WebSocket disponible en: ws://localhost:${parseInt(process.env.WEBSOCKET_PORT) || 3002}/gpec5-realtime`);
