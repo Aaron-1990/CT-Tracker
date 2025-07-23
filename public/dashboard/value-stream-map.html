@@ -9,224 +9,69 @@
     <link rel="stylesheet" href="../shared/css/variables.css">
     <link rel="stylesheet" href="css/vsm-dashboard.css">
     <link rel="stylesheet" href="css/process-cards.css">
-    <link rel="stylesheet" href="css/metrics-display.css">
-    <link rel="stylesheet" href="css/realtime-indicators.css">
+    <link rel="stylesheet" href="css/dynamic-dashboard.css">
 </head>
 <body>
     <div class="dashboard-container">
         <!-- Header -->
-        <div class="header">
+        <header class="header">
             <h1>🗺️ Dashboard VSM - Línea GPEC5</h1>
-            <div class="subtitle">Sistema de Monitoreo Value Stream Mapping en Tiempo Real</div>
+            <p class="subtitle">Sistema de Monitoreo Value Stream Mapping en Tiempo Real</p>
             
             <div class="status-bar">
                 <div class="status-item">
-                    <div class="status-indicator"></div>
+                    <div class="status-indicator" id="system-status"></div>
                     <span>Sistema Online</span>
                 </div>
                 <div class="status-item">
-                    <div class="status-indicator"></div>
+                    <div class="status-indicator" id="csv-status"></div>
                     <span>Procesando CSVs</span>
                 </div>
                 <div class="status-item">
-                    <div class="status-indicator"></div>
+                    <div class="status-indicator" id="outlier-status"></div>
                     <span>Detección ±2σ Activa</span>
                 </div>
                 <div class="status-item">
-                    <div class="status-indicator"></div>
+                    <div class="status-indicator" id="realtime-status"></div>
                     <span id="connection-status">Datos en Tiempo Real</span>
                 </div>
             </div>
-        </div>
+        </header>
 
         <!-- VSM Flow Principal -->
-        <div class="vsm-flow">
-            <!-- Wave Solder -->
-            <div class="process-card">
-                <div class="realtime-indicator"></div>
-                <div class="process-title">🌊 WAVE SOLDER</div>
-                <div class="equipment-info">
-                    Equipos: WAVESOLDER_01<br>
-                    Configuración: Individual
-                </div>
-                
-                <div class="metrics-grid">
-                    <div class="metric-item">
-                        <span class="metric-value" id="wave-design">45s</span>
-                        <span class="metric-label">⚙️ Diseño</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="wave-real">47s</span>
-                        <span class="metric-label">⚡ T.Real</span>
-                        <span class="outlier-indicator outlier-normal">Normal</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="wave-hourly">48s</span>
-                        <span class="metric-label">📊 Prom.1h</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="wave-oee">94.2%</span>
-                        <span class="metric-label">📈 OEE</span>
-                    </div>
-                </div>
-
-                <div class="big-metrics">
-                    <div class="big-metric">
-                        <div class="big-metric-value" id="wave-pieces">892</div>
-                        <div class="big-metric-label">🔢 Piezas</div>
-                    </div>
-                    <div class="big-metric">
-                        <div class="big-metric-value" id="wave-efficiency">95.7%</div>
-                        <div class="big-metric-label">📊 Eficiencia</div>
-                    </div>
-                </div>
+        <main class="vsm-flow" id="vsm-process-container">
+            <div class="loading-message">
+                <div class="loading-spinner"></div>
+                <p>🔄 Cargando procesos de la línea GPEC5...</p>
             </div>
+        </main>
 
-            <div class="flow-arrow">→</div>
-
-            <!-- Continuity -->
-            <div class="process-card">
-                <div class="realtime-indicator"></div>
-                <div class="process-title">🔌 CONTINUITY</div>
-                <div class="equipment-info">
-                    Equipos: CONT01, CONT02, CONT03<br>
-                    Configuración: Paralelos | Agregación: Promedio Ponderado
-                </div>
-                
-                <div class="metrics-grid">
-                    <div class="metric-item">
-                        <span class="metric-value" id="cont-design">30s</span>
-                        <span class="metric-label">⚙️ Diseño</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="cont-real">32s</span>
-                        <span class="metric-label">⚡ T.Real</span>
-                        <span class="outlier-indicator outlier-normal">Normal</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="cont-hourly">31s</span>
-                        <span class="metric-label">📊 Prom.1h</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="cont-oee">96.8%</span>
-                        <span class="metric-label">📈 OEE</span>
-                    </div>
-                </div>
-
-                <div class="big-metrics">
-                    <div class="big-metric">
-                        <div class="big-metric-value" id="cont-pieces">1,145</div>
-                        <div class="big-metric-label">🔢 Piezas</div>
-                    </div>
-                    <div class="big-metric">
-                        <div class="big-metric-value" id="cont-efficiency">93.8%</div>
-                        <div class="big-metric-label">📊 Eficiencia</div>
-                    </div>
-                </div>
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-info">
+                <span>Última actualización: <time id="lastUpdate">--</time></span>
+                <span class="separator">|</span>
+                <span>Equipos activos: <span id="activeEquipments">--</span></span>
+                <span class="separator">|</span>
+                <span>Procesamiento: <span id="processingStatus">Iniciando...</span></span>
             </div>
+        </footer>
+    </div>
 
-            <div class="flow-arrow">→</div>
-
-            <!-- Hot Test -->
-            <div class="process-card">
-                <div class="realtime-indicator"></div>
-                <div class="process-title">🔥 HOT TEST</div>
-                <div class="equipment-info">
-                    Equipos: HTFT_01 a HTFT_11 (10 equipos)<br>
-                    Configuración: Paralelos Masivos | Agregación: Promedio Ponderado
-                </div>
-                
-                <div class="metrics-grid">
-                    <div class="metric-item">
-                        <span class="metric-value" id="htft-design">60s</span>
-                        <span class="metric-label">⚙️ Diseño</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="htft-real">63s</span>
-                        <span class="metric-label">⚡ T.Real</span>
-                        <span class="outlier-indicator outlier-warning">±2σ</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="htft-hourly">65s</span>
-                        <span class="metric-label">📊 Prom.1h</span>
-                    </div>
-                    <div class="metric-item">
-                        <span class="metric-value" id="htft-oee">91.2%</span>
-                        <span class="metric-label">📈 OEE</span>
-                    </div>
-                </div>
-
-                <div class="big-metrics">
-                    <div class="big-metric">
-                        <div class="big-metric-value" id="htft-pieces">2,347</div>
-                        <div class="big-metric-label">🔢 Piezas</div>
-                    </div>
-                    <div class="big-metric">
-                        <div class="big-metric-value" id="htft-efficiency">95.2%</div>
-                        <div class="big-metric-label">📊 Eficiencia</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Estadísticas Generales -->
-        <div class="summary-stats">
-            <div class="summary-title">
-                📊 Resumen General - Línea GPEC5
-            </div>
-            
-            <div class="summary-grid">
-                <div class="summary-card">
-                    <div class="summary-value" id="total-pieces">4,384</div>
-                    <div class="summary-label">Total Piezas Procesadas</div>
-                    <div class="summary-detail">Últimas 8 horas | +2.3% vs ayer</div>
-                </div>
-                
-                <div class="summary-card">
-                    <div class="summary-value" id="total-cycle-time">140s</div>
-                    <div class="summary-label">Tiempo Total Línea</div>
-                    <div class="summary-detail">Suma secuencial | Target: 135s</div>
-                </div>
-                
-                <div class="summary-card">
-                    <div class="summary-value" id="line-efficiency">94.9%</div>
-                    <div class="summary-label">Eficiencia de Línea</div>
-                    <div class="summary-detail">Promedio ponderado | Target: 95%</div>
-                </div>
-                
-                <div class="summary-card">
-                    <div class="summary-value" id="outliers-detected">3.2%</div>
-                    <div class="summary-label">Outliers Detectados</div>
-                    <div class="summary-detail">±2σ | Umbral: 5% | Status: Normal</div>
-                </div>
-                
-                <div class="summary-card">
-                    <div class="summary-value" id="throughput">25.7</div>
-                    <div class="summary-label">Throughput (pzs/h)</div>
-                    <div class="summary-detail">Capacidad actual | Target: 26.7</div>
-                </div>
-                
-                <div class="summary-card">
-                    <div class="summary-value" id="uptime">98.1%</div>
-                    <div class="summary-label">Uptime de Línea</div>
-                    <div class="summary-detail">Últimas 24h | Excelente</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer con última actualización -->
-        <div class="last-updated">
-            🕒 Última actualización: <span id="last-update-time">07/21/2025 07:08:27</span> | 
-            📡 Polling cada 30 segundos | 
-            🎯 Procesando datos de: mxryfis4.global.borgwarner.net |
-            ⚡ Sistema VSM v1.0 - Detección ±2σ Activa
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>⚠️ Error de Conexión</h3>
+            <p id="error-message">Error conectando con el servidor</p>
+            <button id="retry-button" class="retry-btn">Reintentar</button>
         </div>
     </div>
 
-    <!-- JavaScript Files -->
-    <script src="../shared/js/utils.js"></script>
-    <script src="js/realtime-metrics.js"></script>
-    <script src="js/gpec5-data-processor.js"></script>
-    <script src="js/vsm-dashboard-main.js"></script>
+    <!-- JavaScript Files - Orden correcto -->
+    <script src="js/dashboard-config.js"></script>
+    <script src="js/dashboard-api.js"></script>
+    <script src="js/dashboard-renderer.js"></script>
+    <script src="js/dashboard-controller.js"></script>
+    <script src="js/dashboard-init.js"></script>
 </body>
 </html>

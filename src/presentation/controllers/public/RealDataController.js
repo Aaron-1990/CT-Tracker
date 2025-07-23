@@ -267,7 +267,7 @@ class RealDataController {
     }
 
     /**
-     * Analizar registros de un equipo individual
+     * Analizar registros de un equipo individual (CON FIX CONSERVADOR PARA WAVE_SOLDER)
      */
     analyzeEquipmentRecords(records, equipmentId) {
         const cycleTimes = [];
@@ -291,82 +291,159 @@ class RealDataController {
         let validRecords = 0;
         let invalidRecords = 0;
 
-        // Agrupar BREQ y BCMP por serial
-        records.forEach((record, index) => {
-            // 🛠️ VALIDACIÓN MEJORADA: Verificar que el registro individual es válido
-            if (!record || typeof record !== 'object') {
-                logger.warn(`⚠️ ${equipmentId} - Registro ${index} es null/undefined:`, record);
-                invalidRecords++;
-                return;
-            }
-
-            // Verificar propiedades críticas del registro
-            if (!record.serial || !record.status) {
-                logger.warn(`⚠️ ${equipmentId} - Registro ${index} falta serial/status:`, {
-                    serial: record.serial,
-                    status: record.status,
-                    keys: Object.keys(record)
-                });
-                invalidRecords++;
-                return;
-            }
-
-            // Verificar que status es string antes de usar startsWith
-            if (typeof record.status !== 'string') {
-                logger.warn(`⚠️ ${equipmentId} - Registro ${index} status no es string:`, {
-                    serial: record.serial,
-                    status: record.status,
-                    statusType: typeof record.status
-                });
-                invalidRecords++;
-                return;
-            }
-
-            validRecords++;
-            const key = record.serial;
+        // 🔧 NUEVA FUNCIONALIDAD: Detectar WAVE_SOLDER
+        const isWaveSolder = equipmentId.includes('WAVESOLDER') || equipmentId.includes('WAVE');
+        
+        if (isWaveSolder) {
+            logger.info(`🌊 WAVE_SOLDER detectado: ${equipmentId} - Usando cálculo timestamp a timestamp`);
             
-            if (record.status === 'BREQ') {
-                breqMap.set(key, record);
-            } else if (record.status.startsWith('BCMP')) {
-                const breqRecord = breqMap.get(key);
-                if (breqRecord) {
-                    // Validar timestamps antes de calcular
-                    if (!record.timestamp || !breqRecord.timestamp) {
-                        logger.warn(`⚠️ ${equipmentId} - Timestamps inválidos para serial ${key}`);
-                        return;
-                    }
-
-                    // Calcular tiempo de ciclo
-                    const cycleTime = (record.timestamp - breqRecord.timestamp) / 1000; // segundos
-                    
-                    if (cycleTime > 0 && cycleTime < 7200) { // Validar rango razonable (0-2 horas)
-                        cycleTimes.push({
-                            serial: record.serial,
-                            cycleTime,
-                            breqTime: breqRecord.timestamp,
-                            bcmpTime: record.timestamp,
-                            status: record.status
-                        });
-                    }
-                    
-                    pieces.total++;
-                    if (record.status === 'BCMP OK') {
-                        pieces.ok++;
-                    } else {
-                        pieces.ng++;
-                    }
-                    
-                    breqMap.delete(key); // Limpiar pair procesado
+            // PARA WAVE_SOLDER: Calcular cycle times entre timestamps consecutivos
+            records.forEach((record, index) => {
+                // 🛠️ VALIDACIÓN MEJORADA: Verificar que el registro individual es válido
+                if (!record || typeof record !== 'object') {
+                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} es null/undefined:`, record);
+                    invalidRecords++;
+                    return;
                 }
-            }
-        });
 
-        // Log de debugging para entender la calidad de los datos
+                // Verificar propiedades críticas del registro
+                if (!record.serial || !record.status) {
+                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} falta serial/status:`, {
+                        serial: record.serial,
+                        status: record.status,
+                        keys: Object.keys(record)
+                    });
+                    invalidRecords++;
+                    return;
+                }
+
+                // Verificar que status es string
+                if (typeof record.status !== 'string') {
+                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} status no es string:`, {
+                        serial: record.serial,
+                        status: record.status,
+                        statusType: typeof record.status
+                    });
+                    invalidRecords++;
+                    return;
+                }
+
+                validRecords++;
+                
+                // Contar piezas procesadas para WAVE_SOLDER
+                pieces.total++;
+                if (record.status.includes('OK') || record.status.includes('Processed OK')) {
+                    pieces.ok++;
+                } else {
+                    pieces.ng++;
+                }
+                
+                // Calcular cycle time con el registro anterior (timestamp consecutivo)
+                if (index > 0) {
+                    const previousRecord = records[index - 1];
+                    if (previousRecord && previousRecord.timestamp && record.timestamp) {
+                        const currentTime = new Date(record.timestamp);
+                        const previousTime = new Date(previousRecord.timestamp);
+                        
+                        if (!isNaN(currentTime.getTime()) && !isNaN(previousTime.getTime())) {
+                            const diferenciaMs = Math.abs(currentTime.getTime() - previousTime.getTime());
+                            const diferenciaSeg = diferenciaMs / 1000;
+                            
+                            // Solo considerar tiempos razonables (5 segundos a 5 minutos para WAVE_SOLDER)
+                            if (diferenciaSeg >= 5 && diferenciaSeg <= 300) {
+                                cycleTimes.push({
+                                    serial: record.serial,
+                                    cycleTime: diferenciaSeg,
+                                    fromTime: previousTime,
+                                    toTime: currentTime,
+                                    status: record.status
+                                });
+                            }
+                        }
+                    }
+                }
+            });
+            
+            logger.info(`🌊 ${equipmentId} - Cycle times calculados: ${cycleTimes.length} de ${validRecords} registros válidos`);
+            
+        } else {
+            // LÓGICA ORIGINAL PRESERVADA: Para equipos que usan BREQ/BCMP
+            records.forEach((record, index) => {
+                // 🛠️ VALIDACIÓN MEJORADA: Verificar que el registro individual es válido
+                if (!record || typeof record !== 'object') {
+                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} es null/undefined:`, record);
+                    invalidRecords++;
+                    return;
+                }
+
+                // Verificar propiedades críticas del registro
+                if (!record.serial || !record.status) {
+                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} falta serial/status:`, {
+                        serial: record.serial,
+                        status: record.status,
+                        keys: Object.keys(record)
+                    });
+                    invalidRecords++;
+                    return;
+                }
+
+                // Verificar que status es string antes de usar startsWith
+                if (typeof record.status !== 'string') {
+                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} status no es string:`, {
+                        serial: record.serial,
+                        status: record.status,
+                        statusType: typeof record.status
+                    });
+                    invalidRecords++;
+                    return;
+                }
+
+                validRecords++;
+                const key = record.serial;
+                
+                if (record.status === 'BREQ') {
+                    breqMap.set(key, record);
+                } else if (record.status.startsWith('BCMP')) {
+                    const breqRecord = breqMap.get(key);
+                    if (breqRecord) {
+                        // Validar timestamps antes de calcular
+                        if (!record.timestamp || !breqRecord.timestamp) {
+                            logger.warn(`⚠️ ${equipmentId} - Timestamps inválidos para serial ${key}`);
+                            return;
+                        }
+
+                        // Calcular tiempo de ciclo
+                        const cycleTime = (record.timestamp - breqRecord.timestamp) / 1000; // segundos
+                        
+                        if (cycleTime > 0 && cycleTime < 7200) { // Validar rango razonable (0-2 horas)
+                            cycleTimes.push({
+                                serial: record.serial,
+                                cycleTime,
+                                breqTime: breqRecord.timestamp,
+                                bcmpTime: record.timestamp,
+                                status: record.status
+                            });
+                        }
+                        
+                        pieces.total++;
+                        if (record.status === 'BCMP OK') {
+                            pieces.ok++;
+                        } else {
+                            pieces.ng++;
+                        }
+                        
+                        breqMap.delete(key); // Limpiar pair procesado
+                    }
+                }
+            });
+        }
+
+        // Log de debugging para entender la calidad de los datos (PRESERVADO)
         if (invalidRecords > 0) {
             logger.info(`📊 ${equipmentId} - Registros procesados: ${validRecords} válidos, ${invalidRecords} inválidos de ${records.length} total`);
         }
 
-        // Análisis estadístico
+        // Análisis estadístico (PRESERVADO)
         const outlierAnalysis = this.detectOutliers(cycleTimes.map(ct => ct.cycleTime));
         
         return {
