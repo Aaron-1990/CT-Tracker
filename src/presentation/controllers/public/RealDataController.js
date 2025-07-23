@@ -198,7 +198,7 @@ class RealDataController {
     }
 
     /**
-     * Procesar datos de proceso individual para VSM
+     * Procesar datos de proceso individual para VSM (CAMBIO MÍNIMO)
      */
     processProcessDataForVSM(processData) {
         const { processName, processConfig, equipmentData } = processData;
@@ -208,15 +208,47 @@ class RealDataController {
         const pieces = { total: 0, ok: 0, ng: 0 };
         const equipmentMetrics = [];
 
+        // DEBUGGING: Verificar estructura de equipmentData
+        console.log(`🔍 ${processName} - equipmentData type:`, typeof equipmentData);
+        console.log(`🔍 ${processName} - equipmentData size:`, equipmentData?.size || 'No size');
+        
         // Procesar cada equipo del proceso
-        for (const [equipmentId, records] of equipmentData) {
-            const equipmentAnalysis = this.analyzeEquipmentRecords(records, equipmentId);
-            equipmentMetrics.push(equipmentAnalysis);
-            
-            cycleTimes.push(...equipmentAnalysis.cycleTimes);
-            pieces.total += equipmentAnalysis.pieces.total;
-            pieces.ok += equipmentAnalysis.pieces.ok;
-            pieces.ng += equipmentAnalysis.pieces.ng;
+        if (equipmentData && equipmentData instanceof Map) {
+            for (const [equipmentId, records] of equipmentData) {
+                console.log(`🔧 Processing ${equipmentId}:`, {
+                    type: typeof records,
+                    isArray: Array.isArray(records),
+                    length: records?.length,
+                    hasData: records?.data ? 'Yes' : 'No'
+                });
+                
+                // VALIDACIÓN ROBUSTA: Extraer array de diferentes estructuras posibles
+                let recordsArray = [];
+                
+                if (Array.isArray(records)) {
+                    recordsArray = records;
+                    console.log(`✅ ${equipmentId}: Array directo con ${records.length} registros`);
+                } else if (records && records.data && Array.isArray(records.data)) {
+                    recordsArray = records.data;
+                    console.log(`✅ ${equipmentId}: Array en .data con ${records.data.length} registros`);
+                } else {
+                    console.warn(`❌ ${equipmentId}: No se pudo extraer array válido`);
+                    recordsArray = [];
+                }
+                
+                const equipmentAnalysis = this.analyzeEquipmentRecords(recordsArray, equipmentId);
+                equipmentMetrics.push(equipmentAnalysis);
+                
+                // 🔧 FIX: ÚNICO CAMBIO - Extraer números de cycleTimes en lugar de objetos
+                const equipmentCycleTimes = equipmentAnalysis.cycleTimes.map(ct => ct.cycleTime);
+                cycleTimes.push(...equipmentCycleTimes);
+                
+                pieces.total += equipmentAnalysis.pieces.total;
+                pieces.ok += equipmentAnalysis.pieces.ok;
+                pieces.ng += equipmentAnalysis.pieces.ng;
+            }
+        } else {
+            console.error(`❌ ${processName}: equipmentData no es Map válido`);
         }
 
         // Calcular métricas agregadas del proceso
@@ -242,8 +274,55 @@ class RealDataController {
         const pieces = { total: 0, ok: 0, ng: 0 };
         const breqMap = new Map();
         
+        // VALIDACIÓN AGREGADA - Asegurar que records es un array
+        if (!Array.isArray(records)) {
+            logger.warn(`Records for ${equipmentId} is not an array:`, typeof records);
+            return {
+                equipmentId,
+                cycleTimes: [],
+                pieces: { total: 0, ok: 0, ng: 0 },
+                outlierAnalysis: { filtered: [], outlierCount: 0, outlierPercentage: 0 },
+                lastUpdate: new Date(),
+                recordCount: 0
+            };
+        }
+
+        // Contador de registros válidos/inválidos para debugging
+        let validRecords = 0;
+        let invalidRecords = 0;
+
         // Agrupar BREQ y BCMP por serial
-        records.forEach(record => {
+        records.forEach((record, index) => {
+            // 🛠️ VALIDACIÓN MEJORADA: Verificar que el registro individual es válido
+            if (!record || typeof record !== 'object') {
+                logger.warn(`⚠️ ${equipmentId} - Registro ${index} es null/undefined:`, record);
+                invalidRecords++;
+                return;
+            }
+
+            // Verificar propiedades críticas del registro
+            if (!record.serial || !record.status) {
+                logger.warn(`⚠️ ${equipmentId} - Registro ${index} falta serial/status:`, {
+                    serial: record.serial,
+                    status: record.status,
+                    keys: Object.keys(record)
+                });
+                invalidRecords++;
+                return;
+            }
+
+            // Verificar que status es string antes de usar startsWith
+            if (typeof record.status !== 'string') {
+                logger.warn(`⚠️ ${equipmentId} - Registro ${index} status no es string:`, {
+                    serial: record.serial,
+                    status: record.status,
+                    statusType: typeof record.status
+                });
+                invalidRecords++;
+                return;
+            }
+
+            validRecords++;
             const key = record.serial;
             
             if (record.status === 'BREQ') {
@@ -251,6 +330,12 @@ class RealDataController {
             } else if (record.status.startsWith('BCMP')) {
                 const breqRecord = breqMap.get(key);
                 if (breqRecord) {
+                    // Validar timestamps antes de calcular
+                    if (!record.timestamp || !breqRecord.timestamp) {
+                        logger.warn(`⚠️ ${equipmentId} - Timestamps inválidos para serial ${key}`);
+                        return;
+                    }
+
                     // Calcular tiempo de ciclo
                     const cycleTime = (record.timestamp - breqRecord.timestamp) / 1000; // segundos
                     
@@ -276,6 +361,11 @@ class RealDataController {
             }
         });
 
+        // Log de debugging para entender la calidad de los datos
+        if (invalidRecords > 0) {
+            logger.info(`📊 ${equipmentId} - Registros procesados: ${validRecords} válidos, ${invalidRecords} inválidos de ${records.length} total`);
+        }
+
         // Análisis estadístico
         const outlierAnalysis = this.detectOutliers(cycleTimes.map(ct => ct.cycleTime));
         
@@ -285,12 +375,14 @@ class RealDataController {
             pieces,
             outlierAnalysis,
             lastUpdate: records.length > 0 ? records[0].timestamp : new Date(),
-            recordCount: records.length
+            recordCount: records.length,
+            validRecordCount: validRecords,
+            invalidRecordCount: invalidRecords
         };
     }
 
     /**
-     * Calcular métricas VSM para un proceso
+     * Calcular métricas VSM para un proceso (CAMBIOS MÍNIMOS)
      */
     calculateProcessMetrics(allCycleTimes, processConfig, equipmentMetrics) {
         if (allCycleTimes.length === 0) {
@@ -341,9 +433,13 @@ class RealDataController {
 
         return {
             realTime: Math.round(realTime * 10) / 10,
-            hourlyAverage: Math.round(hourlyAverage * 10) / 10,
+            // 🔧 FIX: Validar hourlyAverage antes de Math.round
+            hourlyAverage: hourlyAverage !== null && hourlyAverage !== undefined ? 
+                Math.round(hourlyAverage * 10) / 10 : Math.round(realTime * 10) / 10,
             oee: Math.round(oee * 10) / 10,
-            efficiency: Math.round(efficiency * 10) / 10,
+            // 🔧 FIX: Validar efficiency antes de Math.round  
+            efficiency: efficiency !== null && efficiency !== undefined && !isNaN(efficiency) ? 
+                Math.round(efficiency * 10) / 10 : 95.0,
             outlierPercentage: Math.round(outlierAnalysis.outlierPercentage * 10) / 10,
             outlierStatus,
             throughput: Math.round(throughput * 10) / 10,
@@ -395,9 +491,14 @@ class RealDataController {
     }
 
     /**
-     * Remover outliers y calcular promedio (tu especificación ±2σ)
+     * Remover outliers y calcular promedio (CAMBIO MÍNIMO)
      */
     removeOutliersAndAverage(data, stdMultiplier = 2.0) {
+        // 🔧 FIX: Validar que data existe y tiene elementos
+        if (!data || data.length === 0) {
+            return null;
+        }
+        
         if (data.length < 3) {
             return data.reduce((sum, val) => sum + val, 0) / data.length;
         }

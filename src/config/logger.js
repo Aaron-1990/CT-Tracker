@@ -20,7 +20,7 @@ const logFormat = winston.format.combine(
 
 // Configuración del logger
 const logger = winston.createLogger({
-    level: process.env.LOG_LEVEL || 'info',
+    level: process.env.LOG_LEVEL || 'debug',
     format: logFormat,
     transports: [
         // Log a archivo

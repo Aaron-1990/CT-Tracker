@@ -201,6 +201,7 @@ class CSVExtractor {
             
             logger.info(`📡 Respuesta recibida - Status: ${response.status}, Tamaño: ${response.data.length} chars`);
             logger.debug(`📄 Primeros 200 caracteres: ${response.data.substring(0, 200)}`);
+            logger.debug(`📄 Últimos 200 caracteres: ${response.data.substring(response.data.length - 200)}`);
 
             // Verificar si es HTML (esperado)
             if (response.data.includes('<html') || response.data.includes('<!DOCTYPE')) {

@@ -10,7 +10,7 @@ if (!fs.existsSync(logDir)) {
 }
 
 const logger = winston.createLogger({
-    level: process.env.LOG_LEVEL || 'info',
+    level: process.env.LOG_LEVEL || 'debug',
     format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.errors({ stack: true }),
