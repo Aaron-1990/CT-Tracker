@@ -386,31 +386,45 @@ class DashboardAPI {
         return { valid: true };
     }
 
+    // =====================================================
+    // FIX MÍNIMO: Solo reemplazar la función validateLineData
+    // BUSCAR línea ~357 en dashboard-api.js
+    // =====================================================
+
     /**
      * Validar datos de línea
+     * ✅ FIX: Aceptar tanto array como objeto para processes
      */
     validateLineData(lineData) {
         if (!lineData) {
             return { valid: false, error: 'No line data' };
         }
 
-        if (!lineData.processes || !Array.isArray(lineData.processes)) {
+        // ✅ FIX: Buscar processes en ambas ubicaciones posibles
+        if (!lineData.processes && !lineData.data?.processes) {
+            return { valid: false, error: 'No processes found' };
+        }
+
+        // ✅ FIX: Obtener processes de la ubicación correcta
+        const processes = lineData.data?.processes || lineData.processes;
+
+        // ✅ CAMBIO PRINCIPAL: Validar tanto array como objeto
+        let processesCount = 0;
+        
+        if (Array.isArray(processes)) {
+            processesCount = processes.length;
+        } else if (typeof processes === 'object' && processes !== null) {
+            // El backend envía processes como objeto, no array
+            processesCount = Object.keys(processes).length;
+        } else {
             return { valid: false, error: 'Invalid processes data' };
         }
 
-        if (lineData.processes.length === 0) {
+        if (processesCount === 0) {
             return { valid: false, error: 'No processes found' };
         }
 
         return { valid: true };
-    }
-
-    /**
-     * Limpiar cache
-     */
-    clearCache() {
-        this.cache.clear();
-        this.logger.log('API cache cleared');
     }
 
     /**
