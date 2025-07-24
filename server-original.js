@@ -302,20 +302,15 @@ async function startServer() {
     try {
         // Verificar base de datos
         const dbConnected = await checkDatabaseConnection();
-        if (!dbConnected) {
-            logger.warn('⚠️  PostgreSQL no disponible - Servidor iniciará en modo limitado');
-            logger.warn('🔧 Para funcionalidad completa, configurar PostgreSQL');
-        } else {
-            logger.info('✅ PostgreSQL conectado - Funcionalidad completa disponible');
+        if (!dbConnected && environment.NODE_ENV === 'production') {
+            logger.error('💥 No se puede iniciar sin conexión a la base de datos');
+            process.exit(1);
         }
 
         // Iniciar servidor HTTP
         server.listen(environment.PORT, '0.0.0.0', () => {
             logger.info(`🚀 Servidor VSM iniciado en puerto ${environment.PORT}`);
             logger.info(`🌍 Entorno: ${environment.NODE_ENV}`);
-
-            // AGREGAR ESTA LÍNEA para informar estado de BD
-            logger.info(`🗄️  Base de datos: ${dbConnected ? 'Conectada' : 'Desconectada (modo limitado)'}`);
             
             // Mostrar IPs de acceso
             const interfaces = require('os').networkInterfaces();
