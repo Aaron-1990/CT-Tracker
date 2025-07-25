@@ -36,10 +36,10 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "http://10.42.126.12:3001", "https://10.42.126.12:3001"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "http://10.42.126.12:3001", "https://10.42.126.12:3001"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "ws:", "wss:", "http://10.42.126.12:3001", "https://10.42.126.12:3001"],
+            connectSrc: ["'self'", "ws:", "wss:"],
         },
     },
 }));
@@ -67,6 +67,11 @@ app.set('trust proxy', true);
 // Middleware de filtrado por IP
 app.use(ipFilterMiddleware);
 
+// =============================================================================
+// CAMBIOS MINIMOS EN server.js PARA MULTI-PC
+// Agregar DESPUÉS de la línea: app.use(ipFilterMiddleware);
+// =============================================================================
+
 // Headers adicionales para recursos estáticos Multi-PC
 app.use((req, res, next) => {
     // Headers específicos para archivos CSS/JS
@@ -85,7 +90,6 @@ app.use((req, res, next) => {
     
     next();
 });
-
 
 // Endpoints proxy para recursos críticos (AGREGAR ANTES de las rutas principales)
 app.get('/proxy/css/:filename', (req, res) => {

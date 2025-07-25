@@ -6,7 +6,13 @@ const ipFilterMiddleware = (req, res, next) => {
     const clientIP = (req.ip || req.connection.remoteAddress || '').replace(/^::ffff:/, '');
     const allowedIPs = environment.SECURITY.ALLOWED_IPS;
 
+    // TEMPORAL: Debug para ver qué IP llega y qué IPs están permitidas
+    console.log(`DEBUG: IP detectada: "${clientIP}"`);
+    console.log(`DEBUG: IPs permitidas: [${allowedIPs.map(ip => `"${ip}"`).join(', ')}]`);
+    console.log(`DEBUG: Coincidencia: ${allowedIPs.includes(clientIP)}`);
+
     if (allowedIPs.includes(clientIP)) {
+        console.log(`[${new Date().toISOString()}] Acceso permitido desde IP: ${clientIP}`);
         next();
     } else {
         console.log(`[${new Date().toISOString()}] Acceso denegado desde IP: ${clientIP}`);
@@ -23,9 +29,10 @@ const corsOptions = {
         if (!origin) return callback(null, true);
 
         const allowedOrigins = [
-            'http://localhost:3000',
-            'http://127.0.0.1:3000',
-            ...environment.SECURITY.ALLOWED_IPS.map(ip => `http://${ip}:3000`)
+            'http://localhost:3001',
+            'http://127.0.0.1:3001',
+            'http://10.42.126.12:3001',
+            ...environment.SECURITY.ALLOWED_IPS.map(ip => `http://${ip}:3001`)
         ];
 
         if (allowedOrigins.includes(origin)) {

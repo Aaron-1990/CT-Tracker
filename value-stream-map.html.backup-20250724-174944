@@ -1,21 +1,21 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard VSM - LÃ­nea GPEC5 en Tiempo Real</title>
+    <title>Dashboard VSM - Línea GPEC5 en Tiempo Real</title>
     
     <!-- CSS Files - SOLO CAMBIO DE RUTAS PARA MULTI-PC -->
-    <link rel="stylesheet" href="/shared/css/variables.css">
-    <link rel="stylesheet" href="/dashboard/css/vsm-dashboard.css">
-    <link rel="stylesheet" href="/dashboard/css/process-cards.css">
-    <link rel="stylesheet" href="/dashboard/css/dynamic-dashboard.css">
+    <link rel="stylesheet" href="http://10.42.126.12:3001/shared/css/variables.css">
+    <link rel="stylesheet" href="http://10.42.126.12:3001/dashboard/css/vsm-dashboard.css">
+    <link rel="stylesheet" href="http://10.42.126.12:3001/dashboard/css/process-cards.css">
+    <link rel="stylesheet" href="http://10.42.126.12:3001/dashboard/css/dynamic-dashboard.css">
 </head>
 <body>
     <div class="dashboard-container">
         <!-- Header -->
         <header class="header">
-            <h1>Dashboard VSM - LÃ­nea GPEC5</h1>
+            <h1>Dashboard VSM - Línea GPEC5</h1>
             <p class="subtitle">Sistema de Monitoreo Value Stream Mapping en Tiempo Real</p>
             
             <div class="status-bar">
@@ -29,7 +29,7 @@
                 </div>
                 <div class="status-item">
                     <div class="status-indicator" id="outlier-status"></div>
-                    <span>DetecciÃ³n Â±2Ïƒ Activa</span>
+                    <span>Detección ±2σ Activa</span>
                 </div>
                 <div class="status-item">
                     <div class="status-indicator" id="realtime-status"></div>
@@ -42,14 +42,14 @@
         <main class="vsm-flow" id="vsm-process-container">
             <div class="loading-message">
                 <div class="loading-spinner"></div>
-                <p>Cargando procesos de la lÃ­nea GPEC5...</p>
+                <p>Cargando procesos de la línea GPEC5...</p>
             </div>
         </main>
 
         <!-- Footer -->
         <footer class="footer">
             <div class="footer-info">
-                <span>Ultima Actualizacion: <time id="lastUpdate">--</time></span>
+                <span>Última actualización: <time id="lastUpdate">--</time></span>
                 <span class="separator">|</span>
                 <span>Equipos activos: <span id="activeEquipments">--</span></span>
                 <span class="separator">|</span>
@@ -61,17 +61,17 @@
     <!-- Error Modal -->
     <div id="error-modal" class="modal hidden">
         <div class="modal-content">
-            <h3>Error de ConexiÃ³n</h3>
+            <h3>Error de Conexión</h3>
             <p id="error-message">Error conectando con el servidor</p>
             <button id="retry-button" class="retry-btn">Reintentar</button>
         </div>
     </div>
 
     <!-- JavaScript Files - SOLO CAMBIO DE RUTAS PARA MULTI-PC - Orden correcto mantenido -->
-    <script src="/dashboard/js/dashboard-config.js"></script>
-    <script src="/dashboard/js/dashboard-api.js"></script>
-    <script src="/dashboard/js/dashboard-renderer.js"></script>
-    <script src="/dashboard/js/dashboard-controller.js"></script>
-    <script src="/dashboard/js/dashboard-init.js"></script>
+    <script src="http://10.42.126.12:3001/dashboard/js/dashboard-config.js"></script>
+    <script src="http://10.42.126.12:3001/dashboard/js/dashboard-api.js"></script>
+    <script src="http://10.42.126.12:3001/dashboard/js/dashboard-renderer.js"></script>
+    <script src="http://10.42.126.12:3001/dashboard/js/dashboard-controller.js"></script>
+    <script src="http://10.42.126.12:3001/dashboard/js/dashboard-init.js"></script>
 </body>
 </html>
