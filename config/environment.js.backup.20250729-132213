@@ -18,7 +18,7 @@ const environment = {
     
     // Seguridad
     SECURITY: {
-        ALLOWED_IPS: (process.env.ALLOWED_IPS || '127.0.0.1,::1,10.42.126.12,10.43.126.200,10.43.126.22,10.42.126.135').split(',').map(ip => ip.trim()),
+        ALLOWED_IPS: (process.env.ALLOWED_IPS || '127.0.0.1,10.42.126.12,10.43.126.200,10.43.126.22').split(','),
         SESSION_SECRET: process.env.SESSION_SECRET || 'vsm-secret-key-change-in-production'
     },
 
@@ -56,5 +56,3 @@ const environment = {
 };
 
 module.exports = environment;
-
-

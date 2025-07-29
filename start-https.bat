@@ -1,0 +1,8 @@
+@echo off 
+title Dashboard HTTPS - Puerto 3443 
+cd /d "C:\Aplicaciones\mi-servidor-web" 
+set NODE_ENV=production 
+set HTTPS_PORT=3443 
+set HOST=0.0.0.0 
+echo [%date% %time%] Iniciando servidor HTTPS en puerto 3443... 
+node server-https.js 
