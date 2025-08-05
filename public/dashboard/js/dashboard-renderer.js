@@ -1,8 +1,8 @@
-// public/dashboard/js/dashboard-renderer.js
-// Renderizado dinámico de componentes UI
+﻿// public/dashboard/js/dashboard-renderer.js
+// Renderizado dinÃ¡mico de componentes UI
 
 /**
- * Clase para renderizado dinámico del dashboard
+ * Clase para renderizado dinÃ¡mico del dashboard
  */
 class DashboardRenderer {
     constructor() {
@@ -29,7 +29,7 @@ class DashboardRenderer {
      */
     renderProcessCards(processes) {
         if (!processes || !Array.isArray(processes)) {
-            this.showError('Datos de procesos inválidos');
+            this.showError('Datos de procesos invÃ¡lidos');
             return;
         }
 
@@ -38,7 +38,7 @@ class DashboardRenderer {
         processes.forEach((process, index) => {
             html += this.createProcessCardHTML(process);
             
-            // Agregar flecha entre procesos (excepto el último)
+            // Agregar flecha entre procesos (excepto el Ultimo)
             if (index < processes.length - 1) {
                 html += '<div class="flow-arrow">→</div>';
             }
@@ -72,7 +72,7 @@ class DashboardRenderer {
     }
 
     /**
-     * Crear indicador de tiempo real
+     * Crear indicador de CT Equipo
      */
     createRealTimeIndicator() {
         return '<div class="realtime-indicator"></div>';
@@ -86,19 +86,19 @@ class DashboardRenderer {
     }
 
     /**
-     * Crear información de equipos
+     * Crear informaciÃ³n de equipos
      */
     createEquipmentInfo(count, list, type) {
         return `
             <div class="equipment-info">
                 Equipos (${count}): ${list}<br>
-                Configuración: ${type}
+                Configuracion: ${type}
             </div>
         `;
     }
 
     /**
-     * Crear grid de métricas principales
+     * Crear grid de mÃ©tricas principales
      */
     createMetricsGrid(process) {
         const metrics = process.metrics || {};
@@ -116,7 +116,13 @@ class DashboardRenderer {
                     <span class="metric-value" id="${processName}-real">
                         ${this.formatMetricValue(metrics.realTime, 's')}
                     </span>
-                    <span class="metric-label">Tiempo Real</span>
+                    <span class="metric-label">CT Equipo</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-value" id="${processName}-process-ct">
+                        ${this.formatMetricValue(metrics.processTime || metrics.realTime, 's')}
+                    </span>
+                    <span class="metric-label">CT Proceso</span>
                 </div>
                 <div class="metric-item">
                     <span class="metric-value" id="${processName}-hourly">
@@ -135,7 +141,7 @@ class DashboardRenderer {
     }
 
     /**
-     * Crear métricas grandes (destacadas)
+     * Crear mÃ©tricas grandes (destacadas)
      */
     createBigMetrics(process) {
         const pieces = process.pieces || {};
@@ -190,11 +196,11 @@ class DashboardRenderer {
             return names.join(', ');
         }
         
-        return `${names.slice(0, 2).join(', ')} y ${names.length - 2} más`;
+        return `${names.slice(0, 2).join(', ')} y ${names.length - 2} mÃ¡s`;
     }
 
     /**
-     * Formatear valor de métrica
+     * Formatear valor de mÃ©trica
      */
     formatMetricValue(value, unit = '') {
         if (value === null || value === undefined || isNaN(value)) {
@@ -210,13 +216,13 @@ class DashboardRenderer {
         const statusMap = {
             'normal': 'Normal',
             'warning': 'Alerta',
-            'critical': 'Crítico'
+            'critical': 'CrÃ­tico'
         };
         return statusMap[status] || 'Normal';
     }
 
     /**
-     * Actualizar métricas individuales con animación
+     * Actualizar mÃ©tricas individuales con animaciÃ³n
      */
     updateMetricsWithAnimation(processes) {
         if (!processes) return;
@@ -227,14 +233,14 @@ class DashboardRenderer {
     }
 
     /**
-     * Actualizar métricas de un proceso específico
+     * Actualizar mÃ©tricas de un proceso especÃ­fico
      */
     updateProcessMetrics(process) {
         const processName = process.processName;
         const metrics = process.metrics || {};
         const pieces = process.pieces || {};
 
-        // Actualizar valores con animación
+        // Actualizar valores con animaciÃ³n
         this.updateElementWithAnimation(`${processName}-real`, this.formatMetricValue(metrics.realTime, 's'));
         this.updateElementWithAnimation(`${processName}-hourly`, this.formatMetricValue(metrics.hourlyAverage, 's'));
         this.updateElementWithAnimation(`${processName}-oee`, this.formatMetricValue(metrics.oee, '%'));
@@ -249,7 +255,7 @@ class DashboardRenderer {
     }
 
     /**
-     * Actualizar elemento con animación
+     * Actualizar elemento con animaciÃ³n
      */
     updateElementWithAnimation(elementId, newValue) {
         const element = document.getElementById(elementId);
@@ -257,11 +263,11 @@ class DashboardRenderer {
 
         const currentValue = element.textContent;
         if (currentValue !== newValue) {
-            // Agregar clase de animación
+            // Agregar clase de animaciÃ³n
             element.classList.add('metric-updated');
             element.textContent = newValue;
 
-            // Remover clase después de la animación
+            // Remover clase despuÃ©s de la animaciÃ³n
             setTimeout(() => {
                 element.classList.remove('metric-updated');
             }, this.config.UPDATE.ANIMATION_DURATION);
@@ -320,7 +326,7 @@ class DashboardRenderer {
         const errorMessage = message || this.config.MESSAGES.ERROR_CONNECTION;
         this.container.innerHTML = `
             <div class="error-message">
-                <p>❌ ${errorMessage}</p>
+                <p>âŒ ${errorMessage}</p>
                 <small>Reintentando en ${this.config.UPDATE.INTERVAL / 1000} segundos...</small>
             </div>
         `;
@@ -332,8 +338,8 @@ class DashboardRenderer {
     showNoData() {
         this.container.innerHTML = `
             <div class="error-message">
-                <p>📭 ${this.config.MESSAGES.NO_DATA}</p>
-                <small>Verificando conexión con equipos...</small>
+                <p>ðŸ“­ ${this.config.MESSAGES.NO_DATA}</p>
+                <small>Verificando conexiÃ³n con equipos...</small>
             </div>
         `;
     }
@@ -349,7 +355,7 @@ class DashboardRenderer {
     }
 
     /**
-     * Obtener datos del último renderizado
+     * Obtener datos del Ãºltimo renderizado
      */
     getLastRenderData() {
         return this.lastRenderData;

@@ -1,4 +1,4 @@
-// public/dashboard/js/gpec5-data-processor.js
+﻿// public/dashboard/js/gpec5-data-processor.js
 
 class GPEC5DataProcessor {
     constructor() {
@@ -14,12 +14,12 @@ class GPEC5DataProcessor {
 
     async initialize() {
         try {
-            console.log('🔄 Inicializando conexión con datos reales GPEC5...');
+            console.log('ðŸ”„ Inicializando conexiÃ³n con datos reales GPEC5...');
             
-            // Obtener configuración inicial
+            // Obtener configuraciÃ³n inicial
             await this.loadConfiguration();
             
-            // Iniciar polling si no está activo
+            // Iniciar polling si no estÃ¡ activo
             await this.startPolling();
             
             // Conectar WebSocket para actualizaciones en tiempo real
@@ -28,10 +28,10 @@ class GPEC5DataProcessor {
             // Obtener datos iniciales
             await this.fetchLiveData();
             
-            console.log('✅ Conexión con GPEC5 establecida');
+            console.log('âœ… ConexiÃ³n con GPEC5 establecida');
             
         } catch (error) {
-            console.error('❌ Error inicializando conexión GPEC5:', error);
+            console.error('âŒ Error inicializando conexiÃ³n GPEC5:', error);
             this.showConnectionError(error.message);
         }
     }
@@ -42,11 +42,11 @@ class GPEC5DataProcessor {
             const result = await response.json();
             
             if (result.success) {
-                console.log('📋 Configuración GPEC5 cargada:', result.data);
+                console.log('ðŸ“‹ ConfiguraciÃ³n GPEC5 cargada:', result.data);
                 this.updateConfigurationDisplay(result.data);
                 return result.data;
             } else {
-                throw new Error(result.error || 'Error cargando configuración');
+                throw new Error(result.error || 'Error cargando configuraciÃ³n');
             }
         } catch (error) {
             console.error('Error loading configuration:', error);
@@ -65,10 +65,10 @@ class GPEC5DataProcessor {
             
             if (result.success) {
                 this.pollingActive = true;
-                console.log('🔄 Polling GPEC5 iniciado');
+                console.log('ðŸ”„ Polling GPEC5 iniciado');
                 this.updateConnectionStatus('Polling Activo');
             } else {
-                console.warn('⚠️ Polling ya activo o error:', result.message);
+                console.warn('âš ï¸ Polling ya activo o error:', result.message);
             }
         } catch (error) {
             console.error('Error starting polling:', error);
@@ -84,7 +84,7 @@ class GPEC5DataProcessor {
             if (result.success) {
                 this.lastData = result.data;
                 this.processRealData(result.data);
-                console.log('📊 Datos GPEC5 actualizados:', result.data);
+                console.log('ðŸ“Š Datos GPEC5 actualizados:', result.data);
             } else {
                 throw new Error(result.error || 'Error obteniendo datos');
             }
@@ -101,7 +101,7 @@ class GPEC5DataProcessor {
             this.websocket.onopen = () => {
                 this.isConnected = true;
                 this.reconnectAttempts = 0;
-                console.log('🔗 WebSocket GPEC5 conectado');
+                console.log('ðŸ”— WebSocket GPEC5 conectado');
                 this.updateConnectionStatus('Tiempo Real Activo');
             };
             
@@ -116,14 +116,14 @@ class GPEC5DataProcessor {
             
             this.websocket.onclose = () => {
                 this.isConnected = false;
-                console.log('🔌 WebSocket GPEC5 desconectado');
+                console.log('ðŸ”Œ WebSocket GPEC5 desconectado');
                 this.updateConnectionStatus('Reconectando...');
                 this.scheduleReconnect();
             };
             
             this.websocket.onerror = (error) => {
                 console.error('WebSocket error:', error);
-                this.updateConnectionStatus('Error Conexión');
+                this.updateConnectionStatus('Error ConexiÃ³n');
             };
             
         } catch (error) {
@@ -189,9 +189,9 @@ class GPEC5DataProcessor {
 
         const metrics = processData.metrics;
         
-        // Actualizar métricas con animación
+        // Actualizar mÃ©tricas con animaciÃ³n
         this.updateMetricWithAnimation(`${prefix}-design`, `${processData.designTime}s`);
-        this.updateMetricWithAnimation(`${prefix}-real`, `${metrics.realTime}s`);
+        this.updateMetricWithAnimation(`${prefix}-equipment-ct`, `${metrics.realTime}s`);
         this.updateMetricWithAnimation(`${prefix}-hourly`, `${metrics.hourlyAverage}s`);
         this.updateMetricWithAnimation(`${prefix}-oee`, `${metrics.oee}%`);
         this.updateMetricWithAnimation(`${prefix}-pieces`, processData.pieces.ok.toLocaleString());
@@ -202,13 +202,13 @@ class GPEC5DataProcessor {
     }
 
     updateOutlierIndicator(prefix, status, percentage) {
-        const realTimeElement = document.getElementById(`${prefix}-real`);
+        const realTimeElement = document.getElementById(`${prefix}-equipment-ct`);
         if (realTimeElement && realTimeElement.nextElementSibling) {
             const outlierIndicator = realTimeElement.nextElementSibling;
             if (outlierIndicator.classList.contains('outlier-indicator')) {
                 outlierIndicator.className = `outlier-indicator outlier-${status}`;
                 outlierIndicator.textContent = status === 'normal' ? 'Normal' : 
-                                             status === 'warning' ? `±2σ (${percentage}%)` : 
+                                             status === 'warning' ? `Â±2Ïƒ (${percentage}%)` : 
                                              `Outlier (${percentage}%)`;
             }
         }
@@ -258,11 +258,11 @@ class GPEC5DataProcessor {
     }
 
     updateConfigurationDisplay(config) {
-        // Actualizar contadores de configuración
+        // Actualizar contadores de configuraciÃ³n
         const equipmentCount = config.totalEquipments || 0;
         const processCount = Object.keys(config.processes || {}).length;
         
-        console.log(`📊 GPEC5: ${processCount} procesos, ${equipmentCount} equipos configurados`);
+        console.log(`ðŸ“Š GPEC5: ${processCount} procesos, ${equipmentCount} equipos configurados`);
     }
 
     showConnectionError(errorMessage) {
@@ -280,7 +280,7 @@ class GPEC5DataProcessor {
             max-width: 300px;
         `;
         alert.innerHTML = `
-            <strong>❌ Error Conexión GPEC5</strong><br>
+            <strong>âŒ Error ConexiÃ³n GPEC5</strong><br>
             ${errorMessage}
         `;
         
@@ -306,9 +306,9 @@ class GPEC5DataProcessor {
             animation: slideIn 0.3s ease-out;
         `;
         alert.innerHTML = `
-            <strong>⚠️ Outlier Detectado</strong><br>
+            <strong>âš ï¸ Outlier Detectado</strong><br>
             ${data.process} - ${data.equipment}<br>
-            Tiempo: ${data.cycleTime}s (±${data.sigmaLevel?.toFixed(1) || '?'}σ)
+            Tiempo: ${data.cycleTime}s (Â±${data.sigmaLevel?.toFixed(1) || '?'}Ïƒ)
         `;
         
         document.body.appendChild(alert);
@@ -324,12 +324,12 @@ class GPEC5DataProcessor {
             const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
             
             setTimeout(() => {
-                console.log(`🔄 Intentando reconectar WebSocket (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+                console.log(`ðŸ”„ Intentando reconectar WebSocket (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
                 this.connectWebSocket();
             }, delay);
         } else {
-            console.error('❌ Máximo número de intentos de reconexión alcanzado');
-            this.updateConnectionStatus('Conexión Perdida');
+            console.error('âŒ MÃ¡ximo nÃºmero de intentos de reconexiÃ³n alcanzado');
+            this.updateConnectionStatus('ConexiÃ³n Perdida');
         }
     }
 
@@ -339,10 +339,10 @@ class GPEC5DataProcessor {
             const result = await response.json();
             
             if (result.success) {
-                console.log('📊 Estadísticas del sistema:', result.data);
+                console.log('ðŸ“Š EstadÃ­sticas del sistema:', result.data);
                 return result.data;
             } else {
-                throw new Error(result.error || 'Error obteniendo estadísticas');
+                throw new Error(result.error || 'Error obteniendo estadÃ­sticas');
             }
         } catch (error) {
             console.error('Error getting system stats:', error);
@@ -355,6 +355,6 @@ class GPEC5DataProcessor {
             this.websocket.close();
         }
         this.isConnected = false;
-        console.log('🧹 GPEC5DataProcessor cleanup completed');
+        console.log('ðŸ§¹ GPEC5DataProcessor cleanup completed');
     }
 }

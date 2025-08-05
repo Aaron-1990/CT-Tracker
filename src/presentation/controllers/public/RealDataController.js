@@ -1,4 +1,4 @@
-// src/presentation/controllers/public/RealDataController.js
+﻿// src/presentation/controllers/public/RealDataController.js
 const RealCSVFetcher = require('../../../infrastructure/external/RealCSVFetcher');
 const logger = require('../../../config/logger');
 
@@ -13,7 +13,7 @@ class RealDataController {
 
     /**
      * GET /api/gpec5/configuration
-     * Obtener configuración de equipos y procesos
+     * Obtener configuraciÃ³n de equipos y procesos
      */
     async getConfiguration(req, res) {
         try {
@@ -33,7 +33,7 @@ class RealDataController {
             logger.error('Error getting GPEC5 configuration:', error);
             res.status(500).json({
                 success: false,
-                error: 'Error obteniendo configuración',
+                error: 'Error obteniendo configuraciÃ³n',
                 message: error.message
             });
         }
@@ -41,17 +41,17 @@ class RealDataController {
 
     /**
      * GET /api/gpec5/data/live
-     * Obtener datos en tiempo real de toda la línea
+     * Obtener datos en tiempo real de toda la lÃ­nea
      */
     async getLiveData(req, res) {
         try {
-            logger.info('📊 Fetching live GPEC5 data...');
+            logger.info('ðŸ“Š Fetching live GPEC5 data...');
             const lineData = await this.csvFetcher.fetchLineData();
             
             // Procesar datos para VSM
             const vsmData = this.processLineDataForVSM(lineData);
             
-            // Guardar últimos datos
+            // Guardar Ãºltimos datos
             this.lastLineData = vsmData;
             
             res.json({
@@ -72,7 +72,7 @@ class RealDataController {
 
     /**
      * GET /api/gpec5/process/:processName
-     * Obtener datos de un proceso específico
+     * Obtener datos de un proceso especÃ­fico
      */
     async getProcessData(req, res) {
         try {
@@ -99,14 +99,14 @@ class RealDataController {
 
     /**
      * POST /api/gpec5/polling/start
-     * Iniciar polling automático
+     * Iniciar polling automÃ¡tico
      */
     async startPolling(req, res) {
         try {
             if (this.isPolling) {
                 return res.json({
                     success: true,
-                    message: 'Polling ya está activo',
+                    message: 'Polling ya estÃ¡ activo',
                     data: { polling: true }
                 });
             }
@@ -117,7 +117,7 @@ class RealDataController {
             });
 
             this.isPolling = true;
-            logger.info('🔄 Polling iniciado para línea GPEC5');
+            logger.info('ðŸ”„ Polling iniciado para lÃ­nea GPEC5');
 
             res.json({
                 success: true,
@@ -140,7 +140,7 @@ class RealDataController {
 
     /**
      * POST /api/gpec5/polling/stop
-     * Detener polling automático
+     * Detener polling automÃ¡tico
      */
     stopPolling(req, res) {
         try {
@@ -150,7 +150,7 @@ class RealDataController {
             }
             
             this.isPolling = false;
-            logger.info('⏹️ Polling detenido para línea GPEC5');
+            logger.info('â¹ï¸ Polling detenido para lÃ­nea GPEC5');
 
             res.json({
                 success: true,
@@ -169,7 +169,7 @@ class RealDataController {
     }
 
     /**
-     * Procesar datos de línea completa para VSM
+     * Procesar datos de lÃ­nea completa para VSM
      */
     processLineDataForVSM(lineData) {
         if (lineData.error) {
@@ -198,48 +198,48 @@ class RealDataController {
     }
 
     /**
-     * Procesar datos de proceso individual para VSM (CAMBIO MÍNIMO)
+     * Procesar datos de proceso individual para VSM (CAMBIO MÃNIMO)
      */
     processProcessDataForVSM(processData) {
         const { processName, processConfig, equipmentData } = processData;
         
-        // Calcular métricas VSM para el proceso
+        // Calcular mÃ©tricas VSM para el proceso
         const cycleTimes = [];
         const pieces = { total: 0, ok: 0, ng: 0 };
         const equipmentMetrics = [];
 
         // DEBUGGING: Verificar estructura de equipmentData
-        console.log(`🔍 ${processName} - equipmentData type:`, typeof equipmentData);
-        console.log(`🔍 ${processName} - equipmentData size:`, equipmentData?.size || 'No size');
+        console.log(`ðŸ” ${processName} - equipmentData type:`, typeof equipmentData);
+        console.log(`ðŸ” ${processName} - equipmentData size:`, equipmentData?.size || 'No size');
         
         // Procesar cada equipo del proceso
         if (equipmentData && equipmentData instanceof Map) {
             for (const [equipmentId, records] of equipmentData) {
-                console.log(`🔧 Processing ${equipmentId}:`, {
+                console.log(`ðŸ”§ Processing ${equipmentId}:`, {
                     type: typeof records,
                     isArray: Array.isArray(records),
                     length: records?.length,
                     hasData: records?.data ? 'Yes' : 'No'
                 });
                 
-                // VALIDACIÓN ROBUSTA: Extraer array de diferentes estructuras posibles
+                // VALIDACIÃ“N ROBUSTA: Extraer array de diferentes estructuras posibles
                 let recordsArray = [];
                 
                 if (Array.isArray(records)) {
                     recordsArray = records;
-                    console.log(`✅ ${equipmentId}: Array directo con ${records.length} registros`);
+                    console.log(`âœ… ${equipmentId}: Array directo con ${records.length} registros`);
                 } else if (records && records.data && Array.isArray(records.data)) {
                     recordsArray = records.data;
-                    console.log(`✅ ${equipmentId}: Array en .data con ${records.data.length} registros`);
+                    console.log(`âœ… ${equipmentId}: Array en .data con ${records.data.length} registros`);
                 } else {
-                    console.warn(`❌ ${equipmentId}: No se pudo extraer array válido`);
+                    console.warn(`âŒ ${equipmentId}: No se pudo extraer array vÃ¡lido`);
                     recordsArray = [];
                 }
                 
                 const equipmentAnalysis = this.analyzeEquipmentRecords(recordsArray, equipmentId);
                 equipmentMetrics.push(equipmentAnalysis);
                 
-                // 🔧 FIX: ÚNICO CAMBIO - Extraer números de cycleTimes en lugar de objetos
+                // ðŸ”§ FIX: ÃšNICO CAMBIO - Extraer nÃºmeros de cycleTimes en lugar de objetos
                 const equipmentCycleTimes = equipmentAnalysis.cycleTimes.map(ct => ct.cycleTime);
                 cycleTimes.push(...equipmentCycleTimes);
                 
@@ -248,10 +248,10 @@ class RealDataController {
                 pieces.ng += equipmentAnalysis.pieces.ng;
             }
         } else {
-            console.error(`❌ ${processName}: equipmentData no es Map válido`);
+            console.error(`âŒ ${processName}: equipmentData no es Map vÃ¡lido`);
         }
 
-        // Calcular métricas agregadas del proceso
+        // Calcular mÃ©tricas agregadas del proceso
         const processMetrics = this.calculateProcessMetrics(cycleTimes, processConfig, equipmentMetrics);
 
         return {
@@ -274,7 +274,7 @@ class RealDataController {
         const pieces = { total: 0, ok: 0, ng: 0 };
         const breqMap = new Map();
         
-        // VALIDACIÓN AGREGADA - Asegurar que records es un array
+        // VALIDACIÃ“N AGREGADA - Asegurar que records es un array
         if (!Array.isArray(records)) {
             logger.warn(`Records for ${equipmentId} is not an array:`, typeof records);
             return {
@@ -287,28 +287,28 @@ class RealDataController {
             };
         }
 
-        // Contador de registros válidos/inválidos para debugging
+        // Contador de registros vÃ¡lidos/invÃ¡lidos para debugging
         let validRecords = 0;
         let invalidRecords = 0;
 
-        // 🔧 NUEVA FUNCIONALIDAD: Detectar WAVE_SOLDER
+        // ðŸ”§ NUEVA FUNCIONALIDAD: Detectar WAVE_SOLDER
         const isWaveSolder = equipmentId.includes('WAVESOLDER') || equipmentId.includes('WAVE');
         
         if (isWaveSolder) {
-            logger.info(`🌊 WAVE_SOLDER detectado: ${equipmentId} - Usando cálculo timestamp a timestamp`);
+            logger.info(`ðŸŒŠ WAVE_SOLDER detectado: ${equipmentId} - Usando cÃ¡lculo timestamp a timestamp`);
             
             // PARA WAVE_SOLDER: Calcular cycle times entre timestamps consecutivos
             records.forEach((record, index) => {
-                // 🛠️ VALIDACIÓN MEJORADA: Verificar que el registro individual es válido
+                // ðŸ› ï¸ VALIDACIÃ“N MEJORADA: Verificar que el registro individual es vÃ¡lido
                 if (!record || typeof record !== 'object') {
-                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} es null/undefined:`, record);
+                    logger.warn(`âš ï¸ ${equipmentId} - Registro ${index} es null/undefined:`, record);
                     invalidRecords++;
                     return;
                 }
 
-                // Verificar propiedades críticas del registro
+                // Verificar propiedades crÃ­ticas del registro
                 if (!record.serial || !record.status) {
-                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} falta serial/status:`, {
+                    logger.warn(`âš ï¸ ${equipmentId} - Registro ${index} falta serial/status:`, {
                         serial: record.serial,
                         status: record.status,
                         keys: Object.keys(record)
@@ -319,7 +319,7 @@ class RealDataController {
 
                 // Verificar que status es string
                 if (typeof record.status !== 'string') {
-                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} status no es string:`, {
+                    logger.warn(`âš ï¸ ${equipmentId} - Registro ${index} status no es string:`, {
                         serial: record.serial,
                         status: record.status,
                         statusType: typeof record.status
@@ -364,21 +364,21 @@ class RealDataController {
                 }
             });
             
-            logger.info(`🌊 ${equipmentId} - Cycle times calculados: ${cycleTimes.length} de ${validRecords} registros válidos`);
+            logger.info(`ðŸŒŠ ${equipmentId} - Cycle times calculados: ${cycleTimes.length} de ${validRecords} registros vÃ¡lidos`);
             
         } else {
-            // LÓGICA ORIGINAL PRESERVADA: Para equipos que usan BREQ/BCMP
+            // LÃ“GICA ORIGINAL PRESERVADA: Para equipos que usan BREQ/BCMP
             records.forEach((record, index) => {
-                // 🛠️ VALIDACIÓN MEJORADA: Verificar que el registro individual es válido
+                // ðŸ› ï¸ VALIDACIÃ“N MEJORADA: Verificar que el registro individual es vÃ¡lido
                 if (!record || typeof record !== 'object') {
-                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} es null/undefined:`, record);
+                    logger.warn(`âš ï¸ ${equipmentId} - Registro ${index} es null/undefined:`, record);
                     invalidRecords++;
                     return;
                 }
 
-                // Verificar propiedades críticas del registro
+                // Verificar propiedades crÃ­ticas del registro
                 if (!record.serial || !record.status) {
-                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} falta serial/status:`, {
+                    logger.warn(`âš ï¸ ${equipmentId} - Registro ${index} falta serial/status:`, {
                         serial: record.serial,
                         status: record.status,
                         keys: Object.keys(record)
@@ -389,7 +389,7 @@ class RealDataController {
 
                 // Verificar que status es string antes de usar startsWith
                 if (typeof record.status !== 'string') {
-                    logger.warn(`⚠️ ${equipmentId} - Registro ${index} status no es string:`, {
+                    logger.warn(`âš ï¸ ${equipmentId} - Registro ${index} status no es string:`, {
                         serial: record.serial,
                         status: record.status,
                         statusType: typeof record.status
@@ -408,7 +408,7 @@ class RealDataController {
                     if (breqRecord) {
                         // Validar timestamps antes de calcular
                         if (!record.timestamp || !breqRecord.timestamp) {
-                            logger.warn(`⚠️ ${equipmentId} - Timestamps inválidos para serial ${key}`);
+                            logger.warn(`âš ï¸ ${equipmentId} - Timestamps invÃ¡lidos para serial ${key}`);
                             return;
                         }
 
@@ -440,10 +440,10 @@ class RealDataController {
 
         // Log de debugging para entender la calidad de los datos (PRESERVADO)
         if (invalidRecords > 0) {
-            logger.info(`📊 ${equipmentId} - Registros procesados: ${validRecords} válidos, ${invalidRecords} inválidos de ${records.length} total`);
+            logger.info(`ðŸ“Š ${equipmentId} - Registros procesados: ${validRecords} vÃ¡lidos, ${invalidRecords} invÃ¡lidos de ${records.length} total`);
         }
 
-        // Análisis estadístico (PRESERVADO)
+        // AnÃ¡lisis estadÃ­stico (PRESERVADO)
         const outlierAnalysis = this.detectOutliers(cycleTimes.map(ct => ct.cycleTime));
         
         return {
@@ -459,7 +459,7 @@ class RealDataController {
     }
 
     /**
-     * Calcular métricas VSM para un proceso (CAMBIOS MÍNIMOS)
+     * Calcular mÃ©tricas VSM para un proceso (CAMBIOS MÃNIMOS)
      */
     calculateProcessMetrics(allCycleTimes, processConfig, equipmentMetrics) {
         if (allCycleTimes.length === 0) {
@@ -474,15 +474,15 @@ class RealDataController {
             };
         }
 
-        // Tiempo real: según tu especificación - último par válido promediado
-        const recentCycles = allCycleTimes.slice(0, 10); // Últimos 10 ciclos
+        // Tiempo real: segÃºn tu especificaciÃ³n - Ãºltimo par vÃ¡lido promediado
+        const recentCycles = allCycleTimes.slice(0, 10); // Ãšltimos 10 ciclos
         const realTime = recentCycles.reduce((sum, time) => sum + time, 0) / recentCycles.length;
 
-        // Promedio 1h con filtro ±2σ (tu especificación)
+        // Promedio 1h con filtro Â±2Ïƒ (tu especificaciÃ³n)
         const hourlyData = allCycleTimes.slice(0, 60); // Simular 1 hora de datos
         const hourlyAverage = this.removeOutliersAndAverage(hourlyData, 2.0);
 
-        // OEE: promedio ponderado de equipos (tu especificación)
+        // OEE: promedio ponderado de equipos (tu especificaciÃ³n)
         let oee = 95.0;
         if (processConfig.type === 'parallel') {
             // Para equipos paralelos, promedio ponderado
@@ -494,14 +494,14 @@ class RealDataController {
                 }, 0) / validEquipments.length;
             }
         } else {
-            // Para secuencial, basado en eficiencia vs tiempo diseño
+            // Para secuencial, basado en eficiencia vs tiempo diseÃ±o
             oee = Math.max(85, (processConfig.designTime / realTime) * 100);
         }
 
-        // Eficiencia vs diseño
+        // Eficiencia vs diseÃ±o
         const efficiency = (processConfig.designTime / realTime) * 100;
 
-        // Análisis de outliers
+        // AnÃ¡lisis de outliers
         const outlierAnalysis = this.detectOutliers(allCycleTimes);
         const outlierStatus = this.classifyOutlierStatus(outlierAnalysis.outlierPercentage);
 
@@ -510,11 +510,11 @@ class RealDataController {
 
         return {
             realTime: Math.round(realTime * 10) / 10,
-            // 🔧 FIX: Validar hourlyAverage antes de Math.round
+            // ðŸ”§ FIX: Validar hourlyAverage antes de Math.round
             hourlyAverage: hourlyAverage !== null && hourlyAverage !== undefined ? 
                 Math.round(hourlyAverage * 10) / 10 : Math.round(realTime * 10) / 10,
             oee: Math.round(oee * 10) / 10,
-            // 🔧 FIX: Validar efficiency antes de Math.round  
+            // ðŸ”§ FIX: Validar efficiency antes de Math.round  
             efficiency: efficiency !== null && efficiency !== undefined && !isNaN(efficiency) ? 
                 Math.round(efficiency * 10) / 10 : 95.0,
             outlierPercentage: Math.round(outlierAnalysis.outlierPercentage * 10) / 10,
@@ -526,7 +526,7 @@ class RealDataController {
     }
 
     /**
-     * Detectar outliers con método ±2σ (tu especificación)
+     * Detectar outliers con mÃ©todo Â±2Ïƒ (tu especificaciÃ³n)
      */
     detectOutliers(cycleTimes, stdMultiplier = 2.0) {
         if (cycleTimes.length < 3) {
@@ -568,10 +568,10 @@ class RealDataController {
     }
 
     /**
-     * Remover outliers y calcular promedio (CAMBIO MÍNIMO)
+     * Remover outliers y calcular promedio (CAMBIO MÃNIMO)
      */
     removeOutliersAndAverage(data, stdMultiplier = 2.0) {
-        // 🔧 FIX: Validar que data existe y tiene elementos
+        // ðŸ”§ FIX: Validar que data existe y tiene elementos
         if (!data || data.length === 0) {
             return null;
         }
@@ -602,7 +602,7 @@ class RealDataController {
     }
 
     /**
-     * Calcular resumen de línea completa
+     * Calcular resumen de lÃ­nea completa
      */
     calculateLineSummary(processes) {
         const totalPieces = processes.reduce((sum, p) => sum + p.pieces.total, 0);
@@ -621,7 +621,7 @@ class RealDataController {
             avgEfficiency: Math.round(avgEfficiency * 10) / 10,
             outlierPercentage: totalCycles > 0 ? Math.round((totalOutliers / totalCycles) * 1000) / 10 : 0,
             throughput: totalCycleTime > 0 ? Math.round((3600 / totalCycleTime) * 10) / 10 : 0,
-            uptime: Math.min(100, Math.max(90, avgOEE)), // Aproximación de uptime basada en OEE
+            uptime: Math.min(100, Math.max(90, avgOEE)), // AproximaciÃ³n de uptime basada en OEE
             qualityRate: totalPieces > 0 ? Math.round((totalOKPieces / totalPieces) * 1000) / 10 : 100
         };
     }
@@ -649,11 +649,11 @@ class RealDataController {
     }
 
     /**
-     * Manejar conexión WebSocket
+     * Manejar conexiÃ³n WebSocket
      */
     handleWebSocketConnection(ws) {
         this.connectedClients.add(ws);
-        logger.info(`🔗 Cliente WebSocket conectado. Total: ${this.connectedClients.size}`);
+        logger.info(`ðŸ”— Cliente WebSocket conectado. Total: ${this.connectedClients.size}`);
 
         // Enviar datos actuales inmediatamente
         if (this.lastLineData) {
@@ -666,7 +666,7 @@ class RealDataController {
 
         ws.on('close', () => {
             this.connectedClients.delete(ws);
-            logger.info(`🔌 Cliente WebSocket desconectado. Total: ${this.connectedClients.size}`);
+            logger.info(`ðŸ”Œ Cliente WebSocket desconectado. Total: ${this.connectedClients.size}`);
         });
 
         ws.on('error', (error) => {
@@ -676,7 +676,7 @@ class RealDataController {
     }
 
     /**
-     * Obtener estadísticas del sistema
+     * Obtener estadÃ­sticas del sistema
      */
     getSystemStats(req, res) {
         try {
@@ -701,21 +701,21 @@ class RealDataController {
             logger.error('Error getting system stats:', error);
             res.status(500).json({
                 success: false,
-                error: 'Error obteniendo estadísticas del sistema',
+                error: 'Error obteniendo estadÃ­sticas del sistema',
                 message: error.message
             });
         }
     }
 
     /**
-     * Cleanup al cerrar la aplicación
+     * Cleanup al cerrar la aplicaciÃ³n
      */
     cleanup() {
         if (this.pollingInterval) {
             clearInterval(this.pollingInterval);
         }
         this.connectedClients.clear();
-        logger.info('🧹 RealDataController cleanup completed');
+        logger.info('ðŸ§¹ RealDataController cleanup completed');
     }
 }
 
