@@ -229,3 +229,15 @@
         font-size: 0.8rem;
     }
 }
+/* =============================================================================
+ * PROCESS CARDS - COMPATIBLE CON LAYOUT LINEAL
+ * ============================================================================= */
+
+.process-card {
+    /* Evitar que se encojan en el layout flex */
+    flex-shrink: 0;
+    /* Mantener ancho fijo para layout horizontal */
+    width: auto;
+    min-width: 420px;
+    max-width: 480px;
+}

@@ -17,7 +17,7 @@ body {
 
 /* Container Principal */
 .dashboard-container {
-    max-width: 1600px;
+    max-width: 95vw;
     margin: 0 auto;
     padding: 20px;
 }
@@ -200,21 +200,34 @@ body {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-/* VSM LINEAR LAYOUT - 20250805-150919 */
+
+}
+/* =============================================================================
+ * VSM LINEAR LAYOUT - CORRECCION 20250805-154615
+ * Layout horizontal verdadero sin centrado
+ * ============================================================================= */
+
 .vsm-flow {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 1.5rem;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    gap: 2rem;
     margin: 2rem 0;
     padding: 2rem 1rem;
-    min-height: 400px;
+    min-height: 60vh;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: thin;
     scrollbar-color: var(--primary-blue) #f1f1f1;
+    
+    /* Eliminar cualquier centrado */
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
 }
 
+/* Webkit scrollbar para mejor UX */
 .vsm-flow::-webkit-scrollbar {
     height: 12px;
 }
@@ -229,6 +242,7 @@ body {
     border-radius: 6px;
 }
 
+/* Flechas de flujo */
 .flow-arrow {
     font-size: 2.5rem;
     color: var(--primary-blue);
@@ -251,6 +265,112 @@ body {
     }
 }
 
+
+/* Numeros de secuencia */
+.process-sequence {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary-blue);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Responsive pero manteniendo layout lineal */
+@media (max-width: 768px) {
+    .vsm-flow {
+        gap: 1rem;
+        padding: 1rem 0.5rem;
+        /* Mantener scroll horizontal en mobile */
+        justify-content: flex-start !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    .flow-arrow {
+        font-size: 2rem;
+        min-width: 30px;
+    }
+    
+    .vsm-controls {
+        padding: 0.8rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* =============================================================================
+ * VSM LINEAR LAYOUT - CORRECCION 20250805-155013
+ * Layout horizontal verdadero sin centrado
+ * ============================================================================= */
+
+.vsm-flow {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    gap: 2rem;
+    margin: 2rem 0;
+    padding: 2rem 1rem;
+    min-height: 400px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-blue) #f1f1f1;
+    
+    /* Eliminar cualquier centrado */
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Webkit scrollbar para mejor UX */
+.vsm-flow::-webkit-scrollbar {
+    height: 12px;
+}
+
+.vsm-flow::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+.vsm-flow::-webkit-scrollbar-thumb {
+    background: var(--primary-blue);
+    border-radius: 6px;
+}
+
+/* Flechas de flujo */
+.flow-arrow {
+    font-size: 2.5rem;
+    color: var(--primary-blue);
+    font-weight: bold;
+    min-width: 40px;
+    text-align: center;
+    animation: flowPulse 3s ease-in-out infinite;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+@keyframes flowPulse {
+    0%, 100% { 
+        transform: scale(1); 
+        opacity: 0.7; 
+    }
+    50% { 
+        transform: scale(1.15); 
+        opacity: 1;
+    }
+}
+
+/* Controles VSM */
 .vsm-controls {
     position: sticky;
     top: 0;
@@ -280,10 +400,11 @@ body {
 }
 
 .zoom-btn:hover {
-    background: var(--secondary-blue);
+    background: var(--primary-blue-dark);
     transform: translateY(-2px);
 }
 
+/* Numeros de secuencia */
 .process-sequence {
     position: absolute;
     top: -15px;
@@ -302,10 +423,14 @@ body {
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+/* Responsive pero manteniendo layout lineal */
 @media (max-width: 768px) {
     .vsm-flow {
         gap: 1rem;
         padding: 1rem 0.5rem;
+        /* Mantener scroll horizontal en mobile */
+        justify-content: flex-start !important;
+        flex-wrap: nowrap !important;
     }
     
     .flow-arrow {
