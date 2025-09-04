@@ -465,6 +465,7 @@ class RealDataController {
         if (allCycleTimes.length === 0) {
             return {
                 realTime: processConfig.designTime,
+            processTime: processTime,
                 hourlyAverage: processConfig.designTime,
                 oee: 95.0,
                 efficiency: 95.0,
@@ -477,6 +478,37 @@ class RealDataController {
         // Tiempo real: segÃºn tu especificaciÃ³n - Ãºltimo par vÃ¡lido promediado
         const recentCycles = allCycleTimes.slice(0, 10); // Ãšltimos 10 ciclos
         const realTime = recentCycles.reduce((sum, time) => sum + time, 0) / recentCycles.length;
+
+        // NUEVO: Reconstruir records desde equipmentMetrics para calculateProcessCycleTime
+        let combinedRecords = [];
+        if (equipmentMetrics && equipmentMetrics.length > 0) {
+            equipmentMetrics.forEach(equipment => {
+                if (equipment.cycleTimes && Array.isArray(equipment.cycleTimes)) {
+                    equipment.cycleTimes.forEach(ct => {
+                        if (ct.breqTime && ct.bcmpTime) {
+                            // Reconstruir registros BREQ y BCMP desde cycleTimes
+                            combinedRecords.push({
+                                timestamp: ct.breqTime,
+                                status: 'BREQ',
+                                serial: ct.serial,
+                                equipmentId: equipment.equipmentId
+                            });
+                            combinedRecords.push({
+                                timestamp: ct.bcmpTime,
+                                status: ct.status || 'BCMP OK',
+                                serial: ct.serial,
+                                equipmentId: equipment.equipmentId
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        // Calcular CT Proceso con records reconstruidos
+        const processTime = combinedRecords.length > 0 ? 
+            this.calculateProcessCycleTime(combinedRecords, 'PROCESS_AGGREGATE') : 
+            null;
 
         // Promedio 1h con filtro Â±2Ïƒ (tu especificaciÃ³n)
         const hourlyData = allCycleTimes.slice(0, 60); // Simular 1 hora de datos
@@ -510,6 +542,7 @@ class RealDataController {
 
         return {
             realTime: Math.round(realTime * 10) / 10,
+            processTime: processTime,
             // ðŸ”§ FIX: Validar hourlyAverage antes de Math.round
             hourlyAverage: hourlyAverage !== null && hourlyAverage !== undefined ? 
                 Math.round(hourlyAverage * 10) / 10 : Math.round(realTime * 10) / 10,
@@ -717,6 +750,73 @@ class RealDataController {
         this.connectedClients.clear();
         logger.info('ðŸ§¹ RealDataController cleanup completed');
     }
+    // Se agrega al final de la clase, antes del último }:
+
+    /**
+     * NUEVO: Calcular CT Proceso (BCMP->BCMP consecutivo)
+     * Mide el rate real de producción entre piezas completadas
+     * NO modifica el calculo existente de CT Equipo (analyzeEquipmentRecords)
+     */
+    calculateProcessCycleTime(allRecords, equipmentId) {
+        try {
+            // Validar entrada
+            if (!allRecords || !Array.isArray(allRecords) || allRecords.length < 2) {
+                return null;
+            }
+
+            // Filtrar solo registros BCMP (piezas completadas)
+            const bcmpRecords = allRecords
+                .filter(record => {
+                    if (!record || !record.status) return false;
+                    return record.status.startsWith('BCMP') || 
+                        record.status.includes('OK') || 
+                        record.status.includes('FAIL');
+                })
+                .sort((a, b) => {
+                    const timeA = new Date(a.timestamp || a.scannedAt);
+                    const timeB = new Date(b.timestamp || b.scannedAt);
+                    return timeB.getTime() - timeA.getTime();
+                });
+
+            if (bcmpRecords.length < 2) return null;
+
+            const processCycleTimes = [];
+            
+            // Calcular tiempos entre registros BCMP consecutivos
+            for (let i = 1; i < Math.min(bcmpRecords.length, 15); i++) {
+                const currentRecord = bcmpRecords[i - 1];
+                const previousRecord = bcmpRecords[i];
+                
+                const currentTime = new Date(currentRecord.timestamp || currentRecord.scannedAt);
+                const previousTime = new Date(previousRecord.timestamp || previousRecord.scannedAt);
+                
+                if (!isNaN(currentTime.getTime()) && !isNaN(previousTime.getTime())) {
+                    const cycleTimeMs = currentTime.getTime() - previousTime.getTime();
+                    const cycleTimeSeconds = cycleTimeMs / 1000;
+                    
+                    if (cycleTimeSeconds >= 3 && cycleTimeSeconds <= 300) {
+                        processCycleTimes.push(cycleTimeSeconds);
+                    }
+                }
+            }
+            
+            if (processCycleTimes.length === 0) return null;
+            
+            const recentCycles = processCycleTimes.slice(0, 10);
+            const average = recentCycles.reduce((sum, ct) => sum + ct, 0) / recentCycles.length;
+            
+            return Math.round(average * 10) / 10;
+            
+        } catch (error) {
+            if (typeof logger !== 'undefined') {
+                logger.warn(`Error calculando CT Proceso para ${equipmentId}:`, error.message);
+            } else {
+                console.warn(`Error calculando CT Proceso para ${equipmentId}:`, error.message);
+            }
+            return null;
+        }
+    }
 }
 
 module.exports = RealDataController;
+
